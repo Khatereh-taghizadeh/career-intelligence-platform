@@ -10,7 +10,9 @@ CREATE TABLE job_postings (
     salary_max_usd NUMERIC(10,2),
     company_size VARCHAR(20) NOT NULL,
     skills TEXT NOT NULL,
-    CHECK (salary_min_usd IS NULL
+    CONSTRAINT check_salary_range CHECK (
+        salary_min_usd IS NULL
         OR salary_max_usd IS NULL
-        OR salary_min_usd <= salary_max_usd)
+        OR salary_min_usd <= salary_max_usd
+    )
 );
