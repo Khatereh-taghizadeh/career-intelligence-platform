@@ -53,3 +53,16 @@ FROM job_postings
 GROUP BY seniority
 ORDER BY avg_min_salary DESC;
 
+
+SELECT
+    js.skill,
+    COUNT(*) AS job_count
+FROM job_postings AS jp
+JOIN job_skills AS js
+    ON jp.posting_id = js.posting_id
+WHERE jp.title ILIKE '%Data Engineer%'
+GROUP BY js.skill
+ORDER BY job_count DESC
+LIMIT 10;
+
+

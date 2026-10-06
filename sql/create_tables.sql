@@ -16,3 +16,14 @@ CREATE TABLE job_postings (
         OR salary_min_usd <= salary_max_usd
     )
 );
+
+
+CREATE TABLE job_skills (
+    posting_id VARCHAR(20) NOT NULL,
+    skill TEXT NOT NULL,
+    PRIMARY KEY (posting_id, skill),
+    FOREIGN KEY (posting_id)
+        REFERENCES job_postings(posting_id)
+);
+
+
