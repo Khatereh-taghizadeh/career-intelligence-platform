@@ -1,0 +1,144 @@
+
+"""Load cleaned job postings from CSV into PostgreSQL."""
+
+from pathlib import Path
+
+import pandas as pd
+import psycopg
+
+
+# Database and input file configuration
+DB_NAME = "career_intelligence"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+CSV_PATH = PROJECT_ROOT / "data" / "cleaned_job_postings.csv"
+
+
+# SQL query to insert a job without creating duplicate posting IDs
+INSERT_JOB_SQL = """
+    INSERT INTO job_postings (
+        posting_id,
+        posted_on,
+        title,
+        seniority,
+        city,
+        country,
+        remote,
+        salary_min_usd,
+        salary_max_usd,
+        company_size,
+        skills
+    )
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    ON CONFLICT (posting_id) DO NOTHING
+"""
+
+
+# Insert job skills without creating duplicate job-skill pairs
+INSERT_SKILL_SQL = """
+    INSERT INTO job_skills (
+        posting_id,
+        skill
+    )
+    VALUES (%s, %s)
+    ON CONFLICT (posting_id, skill) DO NOTHING
+"""
+
+def connect_db():
+    """Create and return a PostgreSQL database connection."""
+    return psycopg.connect(f"dbname={DB_NAME}")
+
+
+def prepare_salary(value):
+    """Convert a salary to float, or None if the value is missing."""
+    return float(value) if pd.notna(value) else None
+
+
+def prepare_job_values(row):
+    """Prepare one CSV row for a parameterized SQL INSERT."""
+    return (
+        row["posting_id"],
+        row["posted_on"],
+        row["title"],
+        row["seniority"],
+        row["city"],
+        row["country"],
+        row["remote"],
+        prepare_salary(row["salary_min_usd"]),
+        prepare_salary(row["salary_max_usd"]),
+        row["company_size"],
+        row["skills"],
+    )
+
+
+
+
+def prepare_skill_values(posting_id, skills_text):
+    """Convert a pipe-separated skill string into job-skill pairs."""
+
+    # Split the skill string and prepare one tuple per skill
+    skill_values = []
+
+    for skill in skills_text.split("|"):
+        skill_values.append((posting_id, skill.strip()))
+
+    return skill_values
+
+
+def load_jobs():
+    """Load all CSV jobs into PostgreSQL without inserting duplicates."""
+
+    # Read the cleaned CSV file
+    df = pd.read_csv(CSV_PATH)
+
+    # Stop if posting IDs are missing or duplicated in the source file
+    if df["posting_id"].isna().any():
+        raise ValueError("CSV contains missing posting IDs.")
+
+    if df["posting_id"].duplicated().any():
+        raise ValueError("CSV contains duplicate posting IDs.")
+
+    print("Total CSV rows:", len(df))
+
+    inserted_count = 0
+
+    # Use one connection and one transaction for the entire load
+    with connect_db() as db:
+        with db.cursor() as cur:
+
+            # Process each job posting
+            for row in df.itertuples(index=False, name=None):
+                # Convert tuple values back to named columns
+                job = dict(zip(df.columns, row))
+
+                # Prepare values, including missing salaries
+                job_values = prepare_job_values(job)
+
+                # Insert the job only if its posting ID is new
+                cur.execute(INSERT_JOB_SQL, job_values)
+
+                # Count successfully inserted rows
+                inserted_count += cur.rowcount
+
+                # Prepare the skills associated with this job
+                skill_values = prepare_skill_values(
+                    job["posting_id"],
+                    job["skills"]
+                )
+
+                # Insert each skill without creating duplicate pairs
+                for skill_value in skill_values:
+                    cur.execute(INSERT_SKILL_SQL, skill_value)
+
+
+       
+
+        # The connection context commits if no exception occurs
+
+    print("New jobs inserted:", inserted_count)
+    print("Existing jobs skipped:", len(df) - inserted_count)
+    print("Job loading completed successfully.")
+
+
+if __name__ == "__main__":
+    # Run the loader only when this file is executed directly
+    load_jobs()
