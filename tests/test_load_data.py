@@ -69,7 +69,17 @@ def test_prepare_salary_nan():
     result = prepare_salary(float("nan"))
     assert result is None
 
-    
+
+def test_database_name_environment_variable(monkeypatch):
+    import importlib
+    import scripts.load_data as load_data
+
+    with monkeypatch.context() as patch:
+        patch.setenv("DB_NAME", "test_database")
+        importlib.reload(load_data)
+        assert load_data.DB_NAME == "test_database"
+
+    importlib.reload(load_data)
 
          
 

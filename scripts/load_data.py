@@ -1,14 +1,14 @@
 
 """Load cleaned job postings from CSV into PostgreSQL."""
 
+import os
 from pathlib import Path
 
 import pandas as pd
 import psycopg
 
-
 # Database and input file configuration
-DB_NAME = "career_intelligence"
+DB_NAME = os.getenv("DB_NAME", "career_intelligence")
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CSV_PATH = PROJECT_ROOT / "data" / "cleaned_job_postings.csv"
 
