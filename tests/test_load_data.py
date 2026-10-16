@@ -1,6 +1,11 @@
 import pandas as pd
 import pytest
-from scripts.load_data import prepare_skill_values, validate_required_fields
+from scripts.load_data import (
+    prepare_skill_values,
+    validate_required_fields,
+    prepare_salary,
+)
+
 
 def test_prepare_skill_values():
         result = prepare_skill_values("TEST001", " SQL | Python | AWS ")
@@ -48,6 +53,23 @@ def test_valid_required_fields():
         "skills": "sql|python",
     }])
     validate_required_fields(df)
+
+
+def test_prepare_salary_valid():
+    result = prepare_salary(85000)
+    assert result == 85000
+
+
+def test_prepare_salary_none():
+    result = prepare_salary(None)
+    assert result is None
+
+
+def test_prepare_salary_nan():
+    result = prepare_salary(float("nan"))
+    assert result is None
+
+    
 
          
 
