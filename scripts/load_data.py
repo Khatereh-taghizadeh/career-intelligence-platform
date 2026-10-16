@@ -53,6 +53,14 @@ def prepare_salary(value):
     return float(value) if pd.notna(value) else None
 
 
+def validate_salary_range(salary_min, salary_max):
+    """Validate that minimum salary is not greater than maximum salary."""
+    if salary_min is not None and salary_max is not None:
+        if salary_min > salary_max:
+            raise ValueError("Minimum salary cannot exceed maximum salary")
+
+        
+
 def validate_required_fields(df):
     """Check that required fields have no missing values."""
     required_columns = [
@@ -90,6 +98,12 @@ def validate_required_fields(df):
 
 def prepare_job_values(row):
     """Prepare one CSV row for a parameterized SQL INSERT."""
+
+    salary_min = prepare_salary(row["salary_min_usd"])
+    salary_max = prepare_salary(row["salary_max_usd"])
+
+    validate_salary_range(salary_min, salary_max)
+
     return (
         row["posting_id"],
         row["posted_on"],
@@ -98,8 +112,8 @@ def prepare_job_values(row):
         row["city"],
         row["country"],
         row["remote"],
-        prepare_salary(row["salary_min_usd"]),
-        prepare_salary(row["salary_max_usd"]),
+        salary_min,
+        salary_max,
         row["company_size"],
         "|".join(
             skill

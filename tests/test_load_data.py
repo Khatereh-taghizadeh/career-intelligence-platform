@@ -3,6 +3,8 @@ import pytest
 from scripts.load_data import (
     prepare_skill_values,
     validate_required_fields,
+    validate_salary_range,
+    prepare_job_values,
     prepare_salary,
 )
 
@@ -82,6 +84,37 @@ def test_database_name_environment_variable(monkeypatch):
     importlib.reload(load_data)
 
          
+def test_valid_salary_range():
+    result = validate_salary_range(80000, 120000)
+
+    assert result is None
+
+
+
+def test_invalid_salary_range():
+    with pytest.raises(ValueError, match="Minimum salary cannot exceed maximum salary"):
+        validate_salary_range(150000, 90000)
+
+
+
+def test_prepare_job_values_invalid_salary():
+    row = {
+        "posting_id": "TEST005",
+        "salary_min_usd": 150000,
+        "salary_max_usd": 90000,
+    }
+
+    with pytest.raises(
+        ValueError,
+        match="Minimum salary cannot exceed maximum salary"
+    ):
+        prepare_job_values(row)
+
+
+
+        
+
+
 
 
 
