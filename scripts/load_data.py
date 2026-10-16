@@ -53,6 +53,41 @@ def prepare_salary(value):
     return float(value) if pd.notna(value) else None
 
 
+def validate_required_fields(df):
+    """Check that required fields have no missing values."""
+    required_columns = [
+        "posting_id",
+        "posted_on",
+        "title",
+        "seniority",
+        "city",
+        "country",
+        "remote",
+        "company_size",
+        "skills",
+    ]
+
+    for column in required_columns:
+        if column not in df.columns:
+            raise ValueError(f"Missing required column: {column}")
+
+        missing_rows = df[df[column].isna()]
+
+        if not missing_rows.empty:
+            if column == "posting_id":
+                locations = missing_rows.index.tolist()
+                location_label = "row indices"
+            else:
+                locations = missing_rows["posting_id"].tolist()
+                location_label = "posting IDs"
+
+            raise ValueError(
+                f"Missing values in {column} for {location_label}: "
+                f"{locations}"
+            )
+
+
+
 def prepare_job_values(row):
     """Prepare one CSV row for a parameterized SQL INSERT."""
     return (
@@ -66,7 +101,12 @@ def prepare_job_values(row):
         prepare_salary(row["salary_min_usd"]),
         prepare_salary(row["salary_max_usd"]),
         row["company_size"],
-        row["skills"],
+        "|".join(
+            skill
+            for posting_id, skill in prepare_skill_values(
+                row["posting_id"], row["skills"]
+            )
+        ),
     )
 
 
@@ -77,9 +117,14 @@ def prepare_skill_values(posting_id, skills_text):
 
     # Split the skill string and prepare one tuple per skill
     skill_values = []
+    seen_skills = set()
 
     for skill in skills_text.split("|"):
-        skill_values.append((posting_id, skill.strip()))
+        skill = skill.strip().lower()
+
+        if skill and skill not in seen_skills:
+            seen_skills.add(skill)
+            skill_values.append((posting_id, skill))
 
     return skill_values
 
@@ -89,6 +134,12 @@ def load_jobs():
 
     # Read the cleaned CSV file
     df = pd.read_csv(CSV_PATH)
+
+    # Convert missing values to Python None
+    df = df.astype(object).where(pd.notna(df), None)
+
+    # Validate required fields before loading data
+    validate_required_fields(df)
 
     # Stop if posting IDs are missing or duplicated in the source file
     if df["posting_id"].isna().any():
