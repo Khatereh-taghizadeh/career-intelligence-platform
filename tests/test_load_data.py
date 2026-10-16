@@ -1,3 +1,4 @@
+from unittest.mock import patch
 import pandas as pd
 import pytest
 from scripts.load_data import (
@@ -5,6 +6,7 @@ from scripts.load_data import (
     validate_required_fields,
     validate_salary_range,
     prepare_job_values,
+        load_jobs,
     prepare_salary,
 )
 
@@ -112,7 +114,27 @@ def test_prepare_job_values_invalid_salary():
 
 
 
-        
+def test_load_jobs_error_context():
+    test_df = pd.DataFrame([{
+        "posting_id": "TEST999",
+        "posted_on": "2026-10-16",
+        "title": "Junior Data Engineer",
+        "seniority": "Junior",
+        "city": "San Jose",
+        "country": "US",
+        "remote": "Remote",
+        "salary_min_usd": 150000,
+        "salary_max_usd": 90000,
+        "company_size": "Small",
+        "skills": "sql|python",
+    }])
+    with patch("scripts.load_data.pd.read_csv", return_value=test_df):
+        with patch("scripts.load_data.connect_db"):
+            with pytest.raises(ValueError, match="TEST999"):
+                load_jobs()
+
+
+
 
 
 

@@ -175,8 +175,13 @@ def load_jobs():
                 # Convert tuple values back to named columns
                 job = dict(zip(df.columns, row))
 
-                # Prepare values, including missing salaries
-                job_values = prepare_job_values(job)
+                # Prepare and validate job data, including missing salaries
+                try:
+                    job_values = prepare_job_values(job)
+                except ValueError as error:
+                    raise ValueError(
+                        f"Invalid data for posting_id {job['posting_id']}: {error}"
+                ) from error
 
                 # Insert the job only if its posting ID is new
                 cur.execute(INSERT_JOB_SQL, job_values)
