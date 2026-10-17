@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from scripts.clean_job_description import clean_html
 
 
 def normalize_seniority(levels):
@@ -43,6 +44,25 @@ def normalize_remote_status(job):
         return True
 
     return None
+
+
+def transform_job(job):
+    return {
+        "posting_id": normalize_job_id(job),
+        "title": normalize_job_title(job),
+        "company_name": normalize_company_name(job),
+        "posted_on": normalize_posted_date(job.get("pubDate")),
+        "seniority": normalize_seniority(job.get("seniority")),
+        "remote": normalize_remote_status(job),
+        "salary_min": normalize_salary(job.get("minSalary")),
+        "salary_max": normalize_salary(job.get("maxSalary")),
+        "salary_currency": job.get("currency"),
+        "salary_period": job.get("salaryPeriod"),
+        "employment_type": job.get("employmentType"),
+        "location_restrictions": job.get("locationRestrictions") or [],
+        "description": clean_html(job.get("description")),
+    }
+
 
 
 

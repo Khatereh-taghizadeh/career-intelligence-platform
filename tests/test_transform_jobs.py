@@ -1,3 +1,4 @@
+from datetime import date
 from scripts.transform_jobs import (
     normalize_seniority,
     normalize_salary,
@@ -95,5 +96,42 @@ def test_normalize_remote_status_unknown():
 
     assert normalize_remote_status(job) is None   
 
+
+
+def test_transform_job():
+    from scripts.transform_jobs import transform_job
+
+    job = {
+        "guid": "job-123",
+        "title": "Junior Data Engineer",
+        "companyName": "Woolpert",
+        "pubDate": 1791982155,
+        "seniority": ["Entry-level"],
+        "minSalary": 75400,
+        "maxSalary": 94300,
+        "currency": "USD",
+        "salaryPeriod": "annual",
+        "employmentType": "Full Time",
+        "locationRestrictions": ["United States"],
+        "description": "<p>Experience with Python and SQL</p>",
+    }
+
+    result = transform_job(job)
+
+    assert result == {
+        "posting_id": "job-123",
+        "title": "Junior Data Engineer",
+        "company_name": "Woolpert",
+        "posted_on": date(2026, 10, 14),
+        "seniority": "Entry-level",
+        "remote": None,
+        "salary_min": 75400,
+        "salary_max": 94300,
+        "salary_currency": "USD",
+        "salary_period": "annual",
+        "employment_type": "Full Time",
+        "location_restrictions": ["United States"],
+        "description": "Experience with Python and SQL",
+    }
 
 
