@@ -10,9 +10,9 @@ def backfill_job_relevance():
             cur.execute("""
                 SELECT posting_id, title
                 FROM api_job_postings
-                WHERE is_relevant IS NULL
             """)
             jobs = cur.fetchall()
+            updated_count = 0
 
             for posting_id, title in jobs:
                 is_relevant = is_relevant_job(title)
@@ -21,9 +21,11 @@ def backfill_job_relevance():
                     UPDATE api_job_postings
                     SET is_relevant = %s
                     WHERE posting_id = %s
-                      AND is_relevant IS NULL
+                    AND is_relevant IS DISTINCT FROM %s
                     """,
-                    (is_relevant, posting_id),
+                    (is_relevant, posting_id, is_relevant),
                 )
-            return len(jobs)
+                updated_count += cur.rowcount
+
+            return updated_count
 
