@@ -21,4 +21,12 @@ def test_relevant_software_engineer_data():
 def test_missing_job_title():
     assert is_relevant_job(None) is False
     
-               
+
+def test_analytics_engineer_is_relevant():
+    assert is_relevant_job("Junior Analytics Engineer") is True
+
+
+def test_bi_dev_focus_is_relevant():
+    assert is_relevant_job(
+        "Jr Developer – DevOps & BI Dev Focus (REMOTE)"
+    ) is True

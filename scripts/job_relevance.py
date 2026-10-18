@@ -7,10 +7,12 @@ def is_relevant_job(title):
     keywords = [
         "data engineer",
         "data engineering",
+        "analytics engineer",
         "etl",
         "talend",
         "data pipeline",
         "business intelligence",
+        "bi dev",
         "bi developer",
         "software engineer - data",
     ]
