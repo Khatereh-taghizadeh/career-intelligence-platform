@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from scripts.clean_job_description import clean_html
+from scripts.job_relevance import is_relevant_job
 
 
 def normalize_seniority(levels):
@@ -50,6 +51,7 @@ def transform_job(job):
     return {
         "posting_id": normalize_job_id(job),
         "title": normalize_job_title(job),
+        "is_relevant": is_relevant_job(job.get("title")),
         "company_name": normalize_company_name(job),
         "posted_on": normalize_posted_date(job.get("pubDate")),
         "seniority": normalize_seniority(job.get("seniority")),

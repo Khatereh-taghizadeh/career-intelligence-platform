@@ -121,6 +121,7 @@ def test_transform_job():
     assert result == {
         "posting_id": "job-123",
         "title": "Junior Data Engineer",
+        "is_relevant": True,
         "company_name": "Woolpert",
         "posted_on": date(2026, 10, 14),
         "seniority": "Entry-level",
@@ -133,5 +134,18 @@ def test_transform_job():
         "location_restrictions": ["United States"],
         "description": "Experience with Python and SQL",
     }
+
+
+def test_transform_job_relevance():
+    from scripts.transform_jobs import transform_job
+    
+    job = {
+        "guid": "test-data-engineer-001",
+        "title": "Junior Data Engineer",
+    }
+
+    result = transform_job(job)
+
+    assert result["is_relevant"] is True
 
 
