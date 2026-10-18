@@ -97,6 +97,16 @@ def test_normalize_remote_status_unknown():
     assert normalize_remote_status(job) is None   
 
 
+def test_normalize_remote_status_from_description():
+    from scripts.transform_jobs import normalize_remote_status
+
+    job = {
+        "title": "Junior Business Intelligence Developer",
+        "description": "This position is 100% Remote.",
+    }
+
+    assert normalize_remote_status(job) is True
+
 
 def test_transform_job():
     from scripts.transform_jobs import transform_job

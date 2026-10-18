@@ -40,8 +40,12 @@ def normalize_company_name(job):
 
 def normalize_remote_status(job):
     title = job.get("title") or ""
+    description = job.get("description") or ""
 
     if "remote" in title.lower():
+        return True
+
+    if "100% remote" in description.lower():
         return True
 
     return None
