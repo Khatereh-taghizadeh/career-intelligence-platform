@@ -66,3 +66,16 @@ ORDER BY job_count DESC
 LIMIT 10;
 
 
+
+-- Calculate the percentage of job postings that are both remote and relevant
+-- Uses FILTER for conditional counting and ROUND for two decimal places
+
+SELECT
+    ROUND(
+        100.0 * COUNT(*) FILTER (
+            WHERE remote = TRUE
+              AND is_relevant = TRUE
+        ) / NULLIF(COUNT(*), 0),
+        2
+    ) AS relevant_remote_percentage
+FROM api_job_postings;
