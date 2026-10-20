@@ -27,6 +27,7 @@ def run_pipeline():
     # Step 2: Extract the job list.
     # Return an empty list if the "jobs" key is missing.
     jobs = data.get("jobs", [])
+    fetched_count = len(jobs)
 
     # Step 3: Transform each job into a consistent data structure.
     transformed_jobs = [transform_job(job) for job in jobs]
@@ -50,8 +51,20 @@ def run_pipeline():
                 errors
             )   
 
-    # Step 5: Load only validated jobs into PostgreSQL.
+    # Step 5:Count valid and invalid job postings.
+    valid_count = len(valid_jobs)
+    invalid_count = fetched_count - valid_count
+
+    # Log pipeline metrics.
+    logger.info("Fetched jobs: %s", fetched_count)
+    logger.info("Valid jobs: %s", valid_count)
+    logger.info("Invalid jobs: %s", invalid_count)
+
+    # Step 6: Load valid jobs into PostgreSQL.
     inserted_count = load_api_jobs(valid_jobs)
+
+    # Log the number of successfully inserted jobs.
+    logger.info("Inserted jobs: %s", inserted_count)
 
     # Return all transformed jobs for further processing or testing.
     return transformed_jobs

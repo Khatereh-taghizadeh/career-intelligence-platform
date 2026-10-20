@@ -1,8 +1,10 @@
 from scripts.pipeline import run_pipeline
 
-def test_run_pipeline(monkeypatch):
+def test_run_pipeline(monkeypatch, caplog):
     """Test fetching and transforming job postings."""
-    
+    import logging
+    caplog.set_level(logging.INFO)
+
     fake_job = {
         "guid": "job-123",
         "title": "Junior Data Engineer",
@@ -27,9 +29,20 @@ def test_run_pipeline(monkeypatch):
 
     assert result[0]["company_name"] == "Test Company"
 
+    assert "Fetched jobs: 1" in caplog.text
+
+    # Verify pipeline metrics in the logs.
+    assert "Fetched jobs: 1" in caplog.text
+    assert "Valid jobs: 1" in caplog.text
+    assert "Invalid jobs: 0" in caplog.text
+    assert "Inserted jobs: 1" in caplog.text
+
+
 
 def test_pipeline_skips_invalid_jobs(monkeypatch, caplog):
     """Verify that invalid jobs are excluded from database loading."""
+    import logging
+    caplog.set_level(logging.INFO)
 
     # Step 1: Create one valid job and one invalid job.
     fake_jobs = [
@@ -76,3 +89,8 @@ def test_pipeline_skips_invalid_jobs(monkeypatch, caplog):
     # Verify that the pipeline logged the validation error.
     assert "Missing posting_id" in caplog.text
 
+     
+    assert "Fetched jobs: 2" in caplog.text
+    assert "Valid jobs: 1" in caplog.text
+    assert "Invalid jobs: 1" in caplog.text
+    assert "Inserted jobs: 1" in caplog.text
