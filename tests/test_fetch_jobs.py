@@ -225,3 +225,42 @@ def test_fetch_jobs_invalid_retry_after(monkeypatch):
     assert error_info.value.code == 429
     assert attempts == 4
     assert sleep_calls == [2.5, 4.5, 8.5]
+
+
+def test_fetch_jobs_caps_retry_after(monkeypatch):
+    sleep_calls = []
+    attempts = 0
+
+    def fake_urlopen(request, timeout):
+        nonlocal attempts
+        attempts += 1
+
+        raise HTTPError(
+            url="https://example.com",
+            code=429,
+            msg="Too Many Requests",
+            hdrs={"Retry-After": "999999"},
+            fp=None,
+        )
+    
+    def fake_sleep(seconds):
+        sleep_calls.append(seconds)
+
+    monkeypatch.setattr(
+        "scripts.fetch_jobs.urlopen",
+        fake_urlopen
+    )
+
+    monkeypatch.setattr(
+        "scripts.fetch_jobs.time.sleep",
+        fake_sleep
+    )
+
+    with pytest.raises(HTTPError) as error_info:
+        fetch_jobs()
+
+    assert error_info.value.code == 429
+    assert attempts == 4
+    assert sleep_calls == [60, 60, 60]
+
+    

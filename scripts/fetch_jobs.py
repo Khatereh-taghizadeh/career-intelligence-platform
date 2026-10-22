@@ -11,6 +11,7 @@ MAX_RETRIES = 3
 RETRY_DELAY = 2
 RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 logger = logging.getLogger(__name__)
+MAX_RETRY_DELAY = 60
 
 
 def fetch_jobs():
@@ -39,11 +40,13 @@ def fetch_jobs():
 
             if attempt < MAX_RETRIES:
                 retry_after = error.headers.get("Retry-After") if error.headers else None
+                
                 if error.code == 429 and retry_after and retry_after.isdigit():
                     delay = int(retry_after)
                 else:
                     delay = RETRY_DELAY * (2 ** attempt) + random.uniform(0, 1)
                 
+                delay = min(delay, MAX_RETRY_DELAY)
                 time.sleep(delay)
 
             else:
@@ -54,6 +57,7 @@ def fetch_jobs():
 
             if attempt < MAX_RETRIES:
                 delay = RETRY_DELAY * (2 ** attempt) + random.uniform(0, 1)
+                delay = min(delay, MAX_RETRY_DELAY)
                 time.sleep(delay)
             else:
                 raise
