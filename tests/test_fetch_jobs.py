@@ -120,6 +120,10 @@ def test_fetch_jobs_uses_exponential_backoff(monkeypatch):
 
     sleep_calls = []
     attempts = 0
+    monkeypatch.setattr(
+        "scripts.fetch_jobs.random.uniform",
+        lambda a, b: 0.5
+    )
 
     def fake_sleep(seconds):
         sleep_calls.append(seconds)
@@ -150,6 +154,4 @@ def test_fetch_jobs_uses_exponential_backoff(monkeypatch):
     assert attempts == 4
 
     # Verify exponential retry delays.
-    assert sleep_calls == [2, 4, 8]
-
-    
+    assert sleep_calls == [2.5, 4.5, 8.5]

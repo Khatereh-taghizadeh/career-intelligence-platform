@@ -1,4 +1,5 @@
 import json
+import random
 import logging
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -37,7 +38,8 @@ def fetch_jobs():
             logger.warning("API request failed: %s", error)
 
             if attempt < MAX_RETRIES:
-                time.sleep(RETRY_DELAY * (2 ** attempt))
+                delay = RETRY_DELAY * (2 ** attempt) + random.uniform(0, 1)
+                time.sleep(delay)
 
             else:
                 raise
@@ -46,7 +48,8 @@ def fetch_jobs():
             logger.warning("Network error: %s", error)
 
             if attempt < MAX_RETRIES:
-                time.sleep(RETRY_DELAY * (2 ** attempt))
+                delay = RETRY_DELAY * (2 ** attempt) + random.uniform(0, 1)
+                time.sleep(delay)
             else:
                 raise
 
