@@ -1,17 +1,17 @@
+import json
+import logging
+import pytest
+
 from urllib.error import HTTPError, URLError
 from unittest.mock import MagicMock
+
 from scripts.fetch_jobs import fetch_jobs
-import json
-import pytest
-import logging
 
 
 def test_fetch_jobs_retries_after_network_error(monkeypatch, caplog):
     """Verify that a network failure triggers a retry."""
-    
+
     caplog.set_level(logging.WARNING)
-    
-    # Track how many times the API is called.
     attempts = 0
 
     fake_data = {
@@ -29,14 +29,19 @@ def test_fetch_jobs_retries_after_network_error(monkeypatch, caplog):
 
         response = MagicMock()
         response.__enter__.return_value = response
-
         response.read.return_value = json.dumps(fake_data).encode("utf-8")
+
         return response
 
-    
-    monkeypatch.setattr("scripts.fetch_jobs.time.sleep", lambda seconds: None)
-    monkeypatch.setattr("scripts.fetch_jobs.urlopen", fake_urlopen)
+    monkeypatch.setattr(
+        "scripts.fetch_jobs.time.sleep",
+        lambda seconds: None
+    )
 
+    monkeypatch.setattr(
+        "scripts.fetch_jobs.urlopen",
+        fake_urlopen
+    )
 
     result = fetch_jobs()
 
@@ -67,11 +72,9 @@ def test_fetch_jobs_does_not_retry_404(monkeypatch):
         fake_urlopen
     )
 
-    # Verify that fetch_jobs raises HTTPError.
     with pytest.raises(HTTPError):
         fetch_jobs()
 
-    # Verify that only one request was made.
     assert attempts == 1
 
 
@@ -79,7 +82,6 @@ def test_fetch_jobs_retries_503_until_exhausted(monkeypatch, caplog):
     """Verify that HTTP 503 is retried until attempts are exhausted."""
 
     caplog.set_level(logging.WARNING)
-    
     attempts = 0
 
     def fake_urlopen(request, timeout):
@@ -94,26 +96,60 @@ def test_fetch_jobs_retries_503_until_exhausted(monkeypatch, caplog):
             fp=None
         )
 
-    # Avoid waiting between retries.
     monkeypatch.setattr(
         "scripts.fetch_jobs.time.sleep",
         lambda seconds: None
     )
 
-    # Replace the real API call.
     monkeypatch.setattr(
         "scripts.fetch_jobs.urlopen",
         fake_urlopen
     )
 
-    # Verify that HTTPError is raised after all retries.
     with pytest.raises(HTTPError) as error_info:
         fetch_jobs()
 
-    # Verify that the final error is HTTP 503.
     assert error_info.value.code == 503
-
-    # One initial request + three retries.
     assert attempts == 4
     assert "API request failed:" in caplog.text
     assert caplog.text.count("API request failed:") == 4
+
+
+def test_fetch_jobs_uses_exponential_backoff(monkeypatch):
+    """Verify that retry delays increase exponentially."""
+
+    sleep_calls = []
+    attempts = 0
+
+    def fake_sleep(seconds):
+        sleep_calls.append(seconds)
+
+    def fake_urlopen(request, timeout):
+        nonlocal attempts
+        attempts += 1
+
+        raise URLError("Temporary network failure")
+
+    # Replace real sleep with fake sleep.
+    monkeypatch.setattr(
+        "scripts.fetch_jobs.time.sleep",
+        fake_sleep
+    )
+
+    # Replace real API requests with fake failures.
+    monkeypatch.setattr(
+        "scripts.fetch_jobs.urlopen",
+        fake_urlopen
+    )
+
+    # Expect an error after all retries.
+    with pytest.raises(URLError):
+        fetch_jobs()
+
+    # One initial request + three retries.
+    assert attempts == 4
+
+    # Verify exponential retry delays.
+    assert sleep_calls == [2, 4, 8]
+
+    

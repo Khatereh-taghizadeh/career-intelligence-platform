@@ -37,16 +37,16 @@ def fetch_jobs():
             logger.warning("API request failed: %s", error)
 
             if attempt < MAX_RETRIES:
-                time.sleep(RETRY_DELAY)
+                time.sleep(RETRY_DELAY * (2 ** attempt))
 
             else:
                 raise
 
         except URLError as error:
             logger.warning("Network error: %s", error)
-            
+
             if attempt < MAX_RETRIES:
-                time.sleep(RETRY_DELAY)
+                time.sleep(RETRY_DELAY * (2 ** attempt))
             else:
                 raise
 
