@@ -4,6 +4,8 @@ import pytest
 
 from urllib.error import HTTPError, URLError
 from unittest.mock import MagicMock
+from datetime import datetime, timedelta, timezone
+from email.utils import format_datetime
 
 from scripts.fetch_jobs import fetch_jobs
 
@@ -263,4 +265,43 @@ def test_fetch_jobs_caps_retry_after(monkeypatch):
     assert attempts == 4
     assert sleep_calls == [60, 60, 60]
 
+
+def test_fetch_jobs_respects_retry_after_http_date(monkeypatch):
+    sleep_calls = []
+    attempts = 0
+
+    retry_date = datetime.now(timezone.utc) + timedelta(minutes=5)
+    retry_after = format_datetime(retry_date, usegmt=True)
+
+    def fake_urlopen(request, timeout):
+        nonlocal attempts
+        attempts += 1
+
+        raise HTTPError(
+            url="https://example.com",
+            code=429,
+            msg="Too Many Requests",
+            hdrs={"Retry-After": retry_after},
+            fp=None,
+        )
     
+    def fake_sleep(seconds):
+        sleep_calls.append(seconds)
+
+    monkeypatch.setattr(
+        "scripts.fetch_jobs.urlopen",
+        fake_urlopen
+    )
+
+    monkeypatch.setattr(
+        "scripts.fetch_jobs.time.sleep",
+        fake_sleep
+    )
+
+    with pytest.raises(HTTPError) as error_info:
+        fetch_jobs()
+
+    assert error_info.value.code == 429
+    assert attempts == 4
+    assert len(sleep_calls) == 3
+    assert sleep_calls == [60, 60, 60]

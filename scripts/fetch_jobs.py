@@ -5,6 +5,9 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 import time
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
+
 
 API_URL = "https://himalayas.app/jobs/api/search"
 MAX_RETRIES = 3
@@ -43,8 +46,20 @@ def fetch_jobs():
                 
                 if error.code == 429 and retry_after and retry_after.isdigit():
                     delay = int(retry_after)
+
+                elif error.code == 429 and retry_after:
+                    try:
+                        retry_date = parsedate_to_datetime(retry_after)
+                        if retry_date.tzinfo is None:
+                            retry_date = retry_date.replace(tzinfo=timezone.utc)
+                        current_time = datetime.now(timezone.utc)
+                        delay = max(0, (retry_date - current_time).total_seconds())
+                    except (TypeError, ValueError, OverflowError):
+                        delay = RETRY_DELAY * (2 ** attempt) + random.uniform(0, 1)
+
                 else:
                     delay = RETRY_DELAY * (2 ** attempt) + random.uniform(0, 1)
+
                 
                 delay = min(delay, MAX_RETRY_DELAY)
                 time.sleep(delay)
