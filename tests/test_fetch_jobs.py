@@ -155,3 +155,73 @@ def test_fetch_jobs_uses_exponential_backoff(monkeypatch):
 
     # Verify exponential retry delays.
     assert sleep_calls == [2.5, 4.5, 8.5]
+
+
+def test_fetch_jobs_respects_retry_after(monkeypatch):
+    sleep_calls = []
+    attempts = 0
+
+    def fake_urlopen(request, timeout):
+        nonlocal attempts
+        attempts += 1
+
+        raise HTTPError(
+            url="https://example.com",
+            code=429,
+            msg="Too Many Requests",
+            hdrs={"Retry-After": "30"},
+            fp=None,
+        )
+
+    def fake_sleep(seconds):
+        sleep_calls.append(seconds)
+
+    monkeypatch.setattr("scripts.fetch_jobs.urlopen", fake_urlopen)
+    monkeypatch.setattr("scripts.fetch_jobs.time.sleep", fake_sleep)
+    with pytest.raises(HTTPError) as error_info:
+        fetch_jobs()
+
+    assert error_info.value.code == 429
+    assert attempts == 4
+    assert sleep_calls == [30, 30, 30]
+
+def test_fetch_jobs_invalid_retry_after(monkeypatch):
+    sleep_calls = []
+    attempts = 0
+
+    def fake_urlopen(request, timeout):
+        nonlocal attempts
+        attempts += 1
+
+        raise HTTPError(
+            url="https://example.com",
+            code=429,
+            msg="Too Many Requests",
+            hdrs={"Retry-After": "invalid"},
+            fp=None,
+        )
+    
+    def fake_sleep(seconds):
+        sleep_calls.append(seconds)
+
+    monkeypatch.setattr(
+        "scripts.fetch_jobs.urlopen",
+        fake_urlopen
+    )
+
+    monkeypatch.setattr(
+        "scripts.fetch_jobs.time.sleep",
+        fake_sleep
+    )
+
+    monkeypatch.setattr(
+        "scripts.fetch_jobs.random.uniform",
+        lambda a, b: 0.5
+    )
+
+    with pytest.raises(HTTPError) as error_info:
+        fetch_jobs()
+
+    assert error_info.value.code == 429
+    assert attempts == 4
+    assert sleep_calls == [2.5, 4.5, 8.5]

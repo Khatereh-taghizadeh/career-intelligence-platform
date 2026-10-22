@@ -38,7 +38,12 @@ def fetch_jobs():
             logger.warning("API request failed: %s", error)
 
             if attempt < MAX_RETRIES:
-                delay = RETRY_DELAY * (2 ** attempt) + random.uniform(0, 1)
+                retry_after = error.headers.get("Retry-After") if error.headers else None
+                if error.code == 429 and retry_after and retry_after.isdigit():
+                    delay = int(retry_after)
+                else:
+                    delay = RETRY_DELAY * (2 ** attempt) + random.uniform(0, 1)
+                
                 time.sleep(delay)
 
             else:
