@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
 
-from scripts.fetch_jobs import fetch_jobs, calculate_backoff_delay
+from scripts.fetch_jobs import fetch_jobs, calculate_backoff_delay, calculate_retry_delay
 
 
 def test_fetch_jobs_retries_after_network_error(monkeypatch, caplog):
@@ -340,4 +340,130 @@ def test_calculate_backoff_delay_negative_attempt():
 def test_calculate_backoff_delay_rejects_boolean():
     with pytest.raises(TypeError, match="attempt must be an integer"):
         calculate_backoff_delay(True)
-        
+
+
+def test_calculate_retry_delay_numeric():
+    error = HTTPError(
+        url="https://example.com",
+        code=429,
+        msg="Too Many Requests",
+        hdrs={"Retry-After": "10"},
+        fp=None,
+    )
+
+    delay = calculate_retry_delay(error, 0)
+
+    assert delay == 10
+
+
+def test_calculate_retry_delay_numeric_cap():
+    error = HTTPError(
+        url="https://example.com",
+        code=429,
+        msg="Too Many Requests",
+        hdrs={"Retry-After": "120"},
+        fp=None,
+    )
+
+    delay = calculate_retry_delay(error, 0)
+
+    assert delay == 60
+
+
+def test_calculate_retry_delay_past_date():
+    error = HTTPError(
+        url="https://example.com",
+        code=429,
+        msg="Too Many Requests",
+        hdrs={"Retry-After": "Wed, 21 Oct 2020 07:28:00 GMT"},
+        fp=None,
+    )
+
+    delay = calculate_retry_delay(error, 0)
+
+    assert delay == 0
+
+
+def test_calculate_retry_delay_future_date(monkeypatch):
+    from datetime import datetime, timezone
+
+    fixed_now = datetime(2026, 10, 24, 12, 0, 0, tzinfo=timezone.utc)
+    retry_date = fixed_now + timedelta(seconds=30)
+
+    class FakeDateTime:
+        @staticmethod
+        def now(tz):
+            return fixed_now
+
+    monkeypatch.setattr("scripts.fetch_jobs.datetime", FakeDateTime)
+
+    error = HTTPError(
+        url="https://example.com",
+        code=429,
+        msg="Too Many Requests",
+        hdrs={"Retry-After": retry_date.strftime("%a, %d %b %Y %H:%M:%S GMT")},
+        fp=None,
+    )
+
+    delay = calculate_retry_delay(error, 0)
+
+    assert delay == 30
+
+
+def test_calculate_retry_delay_invalid_header(monkeypatch):
+    monkeypatch.setattr(
+        "scripts.fetch_jobs.calculate_backoff_delay",
+        lambda attempt: 2.5
+    )
+
+    error = HTTPError(
+        url="https://example.com",
+        code=429,
+        msg="Too Many Requests",
+        hdrs={"Retry-After": "invalid-date"},
+        fp=None,
+    )
+
+    delay = calculate_retry_delay(error, 0)
+
+    assert delay == 2.5
+
+
+def test_calculate_retry_delay_missing_header(monkeypatch):
+    monkeypatch.setattr(
+        "scripts.fetch_jobs.calculate_backoff_delay",
+        lambda attempt: 2.5
+    )
+
+    error = HTTPError(
+        url="https://example.com",
+        code=429,
+        msg="Too Many Requests",
+        hdrs={},
+        fp=None,
+    )
+
+    delay = calculate_retry_delay(error, 0)
+
+    assert delay == 2.5
+
+
+def test_calculate_retry_delay_http_503(monkeypatch):
+    monkeypatch.setattr(
+        "scripts.fetch_jobs.calculate_backoff_delay",
+        lambda attempt: 4.5
+    )
+
+    error = HTTPError(
+        url="https://example.com",
+        code=503,
+        msg="Service Unavailable",
+        hdrs={"Retry-After": "10"},
+        fp=None,
+    )
+
+    delay = calculate_retry_delay(error, 1)
+
+    assert delay == 4.5
+
+    
