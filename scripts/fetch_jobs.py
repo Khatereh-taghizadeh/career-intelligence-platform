@@ -18,8 +18,15 @@ MAX_RETRY_DELAY = 60
 
 
 def calculate_backoff_delay(attempt):
+    if type(attempt) is not int:
+        raise TypeError("attempt must be an integer")
+
+    if attempt < 0:
+        raise ValueError("attempt must be non-negative")
+
     delay = RETRY_DELAY * (2 ** attempt) + random.uniform(0, 1)
     return min(delay, MAX_RETRY_DELAY)
+
 
 def fetch_jobs():
     """Fetch job postings from the Himalayas API."""

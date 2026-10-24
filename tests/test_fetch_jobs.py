@@ -325,3 +325,19 @@ def test_calculate_backoff_delay_cap(monkeypatch):
     )
 
     assert calculate_backoff_delay(10) == 60
+
+
+def test_calculate_backoff_delay_invalid_type():
+    with pytest.raises(TypeError, match="attempt must be an integer"):
+        calculate_backoff_delay("three")
+
+
+def test_calculate_backoff_delay_negative_attempt():
+    with pytest.raises(ValueError, match="attempt must be non-negative"):
+        calculate_backoff_delay(-2)
+
+
+def test_calculate_backoff_delay_rejects_boolean():
+    with pytest.raises(TypeError, match="attempt must be an integer"):
+        calculate_backoff_delay(True)
+        
