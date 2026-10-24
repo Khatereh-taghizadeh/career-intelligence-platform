@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
 
-from scripts.fetch_jobs import fetch_jobs
+from scripts.fetch_jobs import fetch_jobs, calculate_backoff_delay
 
 
 def test_fetch_jobs_retries_after_network_error(monkeypatch, caplog):
@@ -305,3 +305,23 @@ def test_fetch_jobs_respects_retry_after_http_date(monkeypatch):
     assert attempts == 4
     assert len(sleep_calls) == 3
     assert sleep_calls == [60, 60, 60]
+
+
+def test_calculate_backoff_delay(monkeypatch):
+    monkeypatch.setattr(
+        "scripts.fetch_jobs.random.uniform",
+        lambda a, b: 0.5
+    )
+
+    assert calculate_backoff_delay(0) == 2.5
+    assert calculate_backoff_delay(1) == 4.5
+    assert calculate_backoff_delay(2) == 8.5
+
+
+def test_calculate_backoff_delay_cap(monkeypatch):
+    monkeypatch.setattr(
+        "scripts.fetch_jobs.random.uniform",
+        lambda a, b: 0.5
+    )
+
+    assert calculate_backoff_delay(10) == 60

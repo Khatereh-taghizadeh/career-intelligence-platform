@@ -17,6 +17,10 @@ logger = logging.getLogger(__name__)
 MAX_RETRY_DELAY = 60
 
 
+def calculate_backoff_delay(attempt):
+    delay = RETRY_DELAY * (2 ** attempt) + random.uniform(0, 1)
+    return min(delay, MAX_RETRY_DELAY)
+
 def fetch_jobs():
     """Fetch job postings from the Himalayas API."""
 
@@ -55,10 +59,10 @@ def fetch_jobs():
                         current_time = datetime.now(timezone.utc)
                         delay = max(0, (retry_date - current_time).total_seconds())
                     except (TypeError, ValueError, OverflowError):
-                        delay = RETRY_DELAY * (2 ** attempt) + random.uniform(0, 1)
+                        delay = calculate_backoff_delay(attempt)
 
                 else:
-                    delay = RETRY_DELAY * (2 ** attempt) + random.uniform(0, 1)
+                    delay = calculate_backoff_delay(attempt)
 
                 
                 delay = min(delay, MAX_RETRY_DELAY)
@@ -71,8 +75,7 @@ def fetch_jobs():
             logger.warning("Network error: %s", error)
 
             if attempt < MAX_RETRIES:
-                delay = RETRY_DELAY * (2 ** attempt) + random.uniform(0, 1)
-                delay = min(delay, MAX_RETRY_DELAY)
+                delay = calculate_backoff_delay(attempt)
                 time.sleep(delay)
             else:
                 raise
