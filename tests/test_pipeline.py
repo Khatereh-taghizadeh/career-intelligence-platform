@@ -97,7 +97,7 @@ def test_pipeline_skips_invalid_jobs(monkeypatch, caplog):
     assert "Inserted jobs: 1" in caplog.text
 
 
-def test_pipeline_rejects_invalid_api_response(monkeypatch):
+def test_pipeline_rejects_invalid_api_response(monkeypatch, caplog):
     """Pipeline should reject an invalid API response."""
 
     monkeypatch.setattr(
@@ -110,4 +110,7 @@ def test_pipeline_rejects_invalid_api_response(monkeypatch):
         match="API response is missing 'jobs' key"
     ):
         run_pipeline()
+
+    assert "Pipeline failed during API fetching or validation" in caplog.text
+    
 

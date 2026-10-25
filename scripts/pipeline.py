@@ -23,11 +23,15 @@ def run_pipeline():
         Only validated jobs are loaded into PostgreSQL.
     """
 
-    # Step 1: Fetch raw job data from the external API.
-    data = fetch_jobs()
-    validate_api_response(data)
-
     start_time = time.perf_counter()
+
+    # Step 1: Fetch raw job data from the external API.
+    try:
+        data = fetch_jobs()
+        validate_api_response(data)
+    except Exception:
+        logger.exception("Pipeline failed during API fetching or validation")
+        raise
 
     # Step 2: Extract the job list.
     # Return an empty list if the "jobs" key is missing.
