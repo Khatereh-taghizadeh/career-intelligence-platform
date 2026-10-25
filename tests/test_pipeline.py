@@ -37,7 +37,7 @@ def test_run_pipeline(monkeypatch, caplog):
     assert "Valid jobs: 1" in caplog.text
     assert "Invalid jobs: 0" in caplog.text
     assert "Inserted jobs: 1" in caplog.text
-    assert "Pipeline completed in" in caplog.text
+    assert "Pipeline execution time:" in caplog.text
 
 
 def test_pipeline_skips_invalid_jobs(monkeypatch, caplog):
@@ -117,6 +117,10 @@ def test_pipeline_rejects_invalid_api_response(monkeypatch, caplog):
 def test_pipeline_logs_database_error(monkeypatch, caplog):
     """Test logging when database loading fails."""
     
+    import logging
+    caplog.set_level(logging.INFO)
+
+
     def fake_database_error(jobs):
         raise RuntimeError("Database connection failed")
 
@@ -138,3 +142,4 @@ def test_pipeline_logs_database_error(monkeypatch, caplog):
 
     
     assert "Pipeline failed during database loading" in caplog.text
+    assert "Pipeline execution time:" in caplog.text

@@ -25,65 +25,68 @@ def run_pipeline():
 
     start_time = time.perf_counter()
 
-    # Step 1: Fetch raw job data from the external API.
     try:
-        data = fetch_jobs()
-        validate_api_response(data)
-    except Exception:
-        logger.exception("Pipeline failed during API fetching or validation")
-        raise
 
-    # Step 2: Extract the job list.
-    # Return an empty list if the "jobs" key is missing.
-    jobs = data.get("jobs", [])
-    fetched_count = len(jobs)
+        # Step 1: Fetch raw job data from the external API.
+        try:
+            data = fetch_jobs()
+            validate_api_response(data)
+        except Exception:
+            logger.exception("Pipeline failed during API fetching or validation")
+            raise
 
-    # Step 3: Transform each job into a consistent data structure.
-    transformed_jobs = [transform_job(job) for job in jobs]
+        # Step 2: Extract the job list.
+        # Return an empty list if the "jobs" key is missing.
+        jobs = data.get("jobs", [])
+        fetched_count = len(jobs)
 
-    # Step 4: Validate each transformed job.
-    valid_jobs = []
+        # Step 3: Transform each job into a consistent data structure.
+        transformed_jobs = [transform_job(job) for job in jobs]
 
-    # Check each job for data quality errors.
-    for job in transformed_jobs:
-        errors = validate_job(job)
+        # Step 4: Validate each transformed job.
+        valid_jobs = []
 
-        # Keep the job only if it passes validation.
-        if not errors:
-            valid_jobs.append(job)
+        # Check each job for data quality errors.
+        for job in transformed_jobs:
+            errors = validate_job(job)
 
-        # Log validation errors and skip invalid jobs.
-        else:
-            logger.warning(
-                "Skipping invalid job %s: %s",
-                job.get("posting_id"),
-                errors
-            )   
+            # Keep the job only if it passes validation.
+            if not errors:
+                valid_jobs.append(job)
 
-    # Step 5:Count valid and invalid job postings.
-    valid_count = len(valid_jobs)
-    invalid_count = fetched_count - valid_count
+            # Log validation errors and skip invalid jobs.
+            else:
+                logger.warning(
+                    "Skipping invalid job %s: %s",
+                    job.get("posting_id"),
+                    errors
+                )   
 
-    # Log pipeline metrics.
-    logger.info("Fetched jobs: %s", fetched_count)
-    logger.info("Valid jobs: %s", valid_count)
-    logger.info("Invalid jobs: %s", invalid_count)
+        # Step 5:Count valid and invalid job postings.
+        valid_count = len(valid_jobs)
+        invalid_count = fetched_count - valid_count
 
-
-    # Step 6: Load valid jobs into PostgreSQL.
-    try:
-        inserted_count = load_api_jobs(valid_jobs)
-    except Exception:
-        logger.exception("Pipeline failed during database loading")
-        raise
+        # Log pipeline metrics.
+        logger.info("Fetched jobs: %s", fetched_count)
+        logger.info("Valid jobs: %s", valid_count)
+        logger.info("Invalid jobs: %s", invalid_count)
 
 
-    # Log the number of successfully inserted jobs.
-    logger.info("Inserted jobs: %s", inserted_count)
+        # Step 6: Load valid jobs into PostgreSQL.
+        try:
+            inserted_count = load_api_jobs(valid_jobs)
+        except Exception:
+            logger.exception("Pipeline failed during database loading")
+            raise
 
-    elapsed_time = time.perf_counter() - start_time
 
-    logging.info("Pipeline completed in %.2f seconds", elapsed_time)
+        # Log the number of successfully inserted jobs.
+        logger.info("Inserted jobs: %s", inserted_count)
 
-    # Return all transformed jobs for further processing or testing.
-    return transformed_jobs
+        # Return all transformed jobs for further processing or testing.
+        return transformed_jobs
+
+
+    finally:
+        elapsed_time = time.perf_counter() - start_time
+        logger.info("Pipeline execution time: %.2f seconds", elapsed_time)
