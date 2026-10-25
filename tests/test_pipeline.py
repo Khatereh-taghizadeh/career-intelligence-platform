@@ -31,14 +31,13 @@ def test_run_pipeline(monkeypatch, caplog):
 
     assert result[0]["company_name"] == "Test Company"
 
-    assert "Fetched jobs: 1" in caplog.text
 
     # Verify pipeline metrics in the logs.
     assert "Fetched jobs: 1" in caplog.text
     assert "Valid jobs: 1" in caplog.text
     assert "Invalid jobs: 0" in caplog.text
     assert "Inserted jobs: 1" in caplog.text
-
+    assert "Pipeline completed in" in caplog.text
 
 
 def test_pipeline_skips_invalid_jobs(monkeypatch, caplog):

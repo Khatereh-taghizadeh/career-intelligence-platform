@@ -4,6 +4,7 @@ from scripts.validate_jobs import validate_job
 from scripts.load_api_jobs import load_api_jobs
 from scripts.validate_api_response import validate_api_response
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,8 @@ def run_pipeline():
     # Step 1: Fetch raw job data from the external API.
     data = fetch_jobs()
     validate_api_response(data)
+
+    start_time = time.perf_counter()
 
     # Step 2: Extract the job list.
     # Return an empty list if the "jobs" key is missing.
@@ -67,6 +70,10 @@ def run_pipeline():
 
     # Log the number of successfully inserted jobs.
     logger.info("Inserted jobs: %s", inserted_count)
+
+    elapsed_time = time.perf_counter() - start_time
+
+    logging.info("Pipeline completed in %.2f seconds", elapsed_time)
 
     # Return all transformed jobs for further processing or testing.
     return transformed_jobs
