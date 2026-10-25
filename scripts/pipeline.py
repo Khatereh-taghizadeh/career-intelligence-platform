@@ -69,8 +69,14 @@ def run_pipeline():
     logger.info("Valid jobs: %s", valid_count)
     logger.info("Invalid jobs: %s", invalid_count)
 
+
     # Step 6: Load valid jobs into PostgreSQL.
-    inserted_count = load_api_jobs(valid_jobs)
+    try:
+        inserted_count = load_api_jobs(valid_jobs)
+    except Exception:
+        logger.exception("Pipeline failed during database loading")
+        raise
+
 
     # Log the number of successfully inserted jobs.
     logger.info("Inserted jobs: %s", inserted_count)

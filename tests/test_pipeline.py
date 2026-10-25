@@ -112,5 +112,29 @@ def test_pipeline_rejects_invalid_api_response(monkeypatch, caplog):
         run_pipeline()
 
     assert "Pipeline failed during API fetching or validation" in caplog.text
-    
 
+
+def test_pipeline_logs_database_error(monkeypatch, caplog):
+    """Test logging when database loading fails."""
+    
+    def fake_database_error(jobs):
+        raise RuntimeError("Database connection failed")
+
+    monkeypatch.setattr(
+        "scripts.pipeline.load_api_jobs",
+        fake_database_error
+    )
+
+    monkeypatch.setattr(
+        "scripts.pipeline.fetch_jobs",
+        lambda: {"jobs": []}
+    )  
+
+    with pytest.raises(
+        RuntimeError,
+        match="Database connection failed"
+    ):
+        run_pipeline() 
+
+    
+    assert "Pipeline failed during database loading" in caplog.text
