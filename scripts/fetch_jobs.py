@@ -98,3 +98,8 @@ def fetch_jobs():
                 raise
 
 
+        except json.JSONDecodeError as error:
+            logger.error("Invalid JSON response from API: %s", error)
+            raise
+
+

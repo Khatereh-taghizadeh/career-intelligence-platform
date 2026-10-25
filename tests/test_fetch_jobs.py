@@ -466,4 +466,20 @@ def test_calculate_retry_delay_http_503(monkeypatch):
 
     assert delay == 4.5
 
-    
+
+def test_fetch_jobs_invalid_json(monkeypatch, caplog):
+    """Test API response with invalid JSON."""
+
+    fake_response = MagicMock()
+    fake_response.read.return_value = b"Service temporarily unavailable"
+
+    fake_response.__enter__.return_value = fake_response
+
+    monkeypatch.setattr(
+        "scripts.fetch_jobs.urlopen",
+        lambda *args, **kwargs: fake_response
+    )
+    with pytest.raises(json.JSONDecodeError):
+        fetch_jobs()
+
+    assert "Invalid JSON response from API" in caplog.text
