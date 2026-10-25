@@ -1,4 +1,6 @@
 from scripts.pipeline import run_pipeline
+import pytest
+
 
 def test_run_pipeline(monkeypatch, caplog):
     """Test fetching and transforming job postings."""
@@ -94,3 +96,19 @@ def test_pipeline_skips_invalid_jobs(monkeypatch, caplog):
     assert "Valid jobs: 1" in caplog.text
     assert "Invalid jobs: 1" in caplog.text
     assert "Inserted jobs: 1" in caplog.text
+
+
+def test_pipeline_rejects_invalid_api_response(monkeypatch):
+    """Pipeline should reject an invalid API response."""
+
+    monkeypatch.setattr(
+        "scripts.pipeline.fetch_jobs",
+        lambda: {"error": "Service unavailable"}
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="API response is missing 'jobs' key"
+    ):
+        run_pipeline()
+

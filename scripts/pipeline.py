@@ -2,6 +2,7 @@ from scripts.fetch_jobs import fetch_jobs
 from scripts.transform_jobs import transform_job
 from scripts.validate_jobs import validate_job
 from scripts.load_api_jobs import load_api_jobs
+from scripts.validate_api_response import validate_api_response
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,11 +19,12 @@ def run_pipeline():
     5. Load job postings into PostgreSQL.
 
     Note:
-        Validation is not yet connected to the loading step.
+        Only validated jobs are loaded into PostgreSQL.
     """
 
     # Step 1: Fetch raw job data from the external API.
     data = fetch_jobs()
+    validate_api_response(data)
 
     # Step 2: Extract the job list.
     # Return an empty list if the "jobs" key is missing.
