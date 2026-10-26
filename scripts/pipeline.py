@@ -9,6 +9,8 @@ import json
 
 logger = logging.getLogger(__name__)
 
+DATA_QUALITY_THRESHOLD = 80.0
+
 def run_pipeline():
     """
     Run the job ingestion pipeline.
@@ -75,6 +77,9 @@ def run_pipeline():
         logger.info("Invalid jobs: %s", invalid_count)
         logger.info("Data quality rate: %.2f%%", quality_rate)
 
+        if fetched_count > 0 and quality_rate < DATA_QUALITY_THRESHOLD:
+            logger.warning("Data quality below threshold: %.2f%% < %.2f%%", quality_rate, DATA_QUALITY_THRESHOLD)
+
 
 
         # Step 6: Load valid jobs into PostgreSQL.
@@ -98,7 +103,7 @@ def run_pipeline():
             "inserted": inserted_count,
             "quality_rate": quality_rate,
         }
-        
+
         logger.info("Pipeline summary: %s", json.dumps(summary))
 
         # Return all transformed jobs for further processing or testing.

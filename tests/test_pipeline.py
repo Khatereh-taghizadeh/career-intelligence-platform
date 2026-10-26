@@ -1,6 +1,7 @@
 from scripts.pipeline import run_pipeline
 import pytest
 import json
+import logging
 
 
 def test_run_pipeline(monkeypatch, caplog):
@@ -176,3 +177,18 @@ def test_pipeline_empty_jobs(monkeypatch, caplog):
 
     assert result == []
     assert "Data quality rate: 0.00%" in caplog.text
+
+def test_pipeline_warns_on_low_data_quality(monkeypatch, caplog):
+    caplog.set_level(logging.WARNING)
+    valid_job = {"guid": "job-001", "title": "Data Engineer", "company": "Test Company"}
+    invalid_job = {"guid": "", "title": "", "company": ""}
+    api_response = {"jobs": [valid_job, invalid_job]}
+    monkeypatch.setattr("scripts.pipeline.fetch_jobs", lambda: api_response)
+    monkeypatch.setattr("scripts.pipeline.load_api_jobs", lambda jobs: len(jobs))
+    
+    run_pipeline()
+
+    assert "Data quality below threshold: 50.00% < 80.00%" in caplog.text
+
+
+
