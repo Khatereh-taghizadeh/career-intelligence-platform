@@ -204,4 +204,23 @@ def test_pipeline_does_not_warn_on_high_data_quality(monkeypatch, caplog):
     run_pipeline()
 
     assert "Data quality below threshold" not in caplog.text
+
+
+def test_pipeline_does_not_warn_at_quality_threshold(monkeypatch, caplog):
+    
+    caplog.set_level(logging.INFO)
+
+    valid_jobs = [{"guid": f"job-{i}", "title": "Data Engineer", "company": "Test Company"} for i in range(1, 5)]
+    invalid_job = {"guid": "", "title": "", "company": ""}
+
+    api_response = {"jobs": valid_jobs + [invalid_job]}
+
+    monkeypatch.setattr("scripts.pipeline.fetch_jobs", lambda: api_response)
+    monkeypatch.setattr("scripts.pipeline.load_api_jobs", lambda jobs: len(jobs))
+
+    run_pipeline()
+
+    assert "Data quality rate: 80.00%" in caplog.text
+    assert "Data quality below threshold" not in caplog.text
+    
     
