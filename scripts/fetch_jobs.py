@@ -57,10 +57,11 @@ def calculate_retry_delay(error, attempt):
 
 
 
-def fetch_jobs():
+def fetch_jobs(query="junior data engineer", country="US"):
     """Fetch job postings from the Himalayas API."""
 
-    params = {"q": "junior data engineer", "country": "US"}
+    params = {"q": query, "country": country}
+
     url = f"{API_URL}?{urlencode(params)}"
 
     request = Request(

@@ -483,3 +483,32 @@ def test_fetch_jobs_invalid_json(monkeypatch, caplog):
         fetch_jobs()
 
     assert "Invalid JSON response from API" in caplog.text
+
+
+def test_fetch_jobs_uses_custom_search_parameters(monkeypatch):
+    from urllib.parse import parse_qs, urlparse
+
+    captured_urls = []
+
+    def fake_urlopen(request, timeout):
+        captured_urls.append(request.full_url)
+
+        response = MagicMock()
+        response.__enter__.return_value = response
+        response.read.return_value = b'{"jobs": []}'
+
+        return response
+
+    monkeypatch.setattr(
+        "scripts.fetch_jobs.urlopen",
+        fake_urlopen
+    )
+
+    fetch_jobs(query="data analyst", country="US")
+
+    assert len(captured_urls) == 1
+
+    params = parse_qs(urlparse(captured_urls[0]).query)
+
+    assert params["q"] == ["data analyst"]
+    assert params["country"] == ["US"]
