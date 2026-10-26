@@ -65,11 +65,15 @@ def run_pipeline():
         # Step 5:Count valid and invalid job postings.
         valid_count = len(valid_jobs)
         invalid_count = fetched_count - valid_count
+        quality_rate = (valid_count / fetched_count * 100) if fetched_count > 0 else 0.0
+
 
         # Log pipeline metrics.
         logger.info("Fetched jobs: %s", fetched_count)
         logger.info("Valid jobs: %s", valid_count)
         logger.info("Invalid jobs: %s", invalid_count)
+        logger.info("Data quality rate: %.2f%%", quality_rate)
+
 
 
         # Step 6: Load valid jobs into PostgreSQL.

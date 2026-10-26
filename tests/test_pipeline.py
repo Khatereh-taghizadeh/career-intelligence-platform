@@ -36,6 +36,7 @@ def test_run_pipeline(monkeypatch, caplog):
     assert "Fetched jobs: 1" in caplog.text
     assert "Valid jobs: 1" in caplog.text
     assert "Invalid jobs: 0" in caplog.text
+    assert "Data quality rate: 100.00%" in caplog.text
     assert "Inserted jobs: 1" in caplog.text
     assert "Pipeline execution time:" in caplog.text
 
@@ -143,3 +144,22 @@ def test_pipeline_logs_database_error(monkeypatch, caplog):
     
     assert "Pipeline failed during database loading" in caplog.text
     assert "Pipeline execution time:" in caplog.text
+
+
+def test_pipeline_empty_jobs(monkeypatch, caplog):
+    """Test pipeline behavior when API returns zero jobs."""
+    import logging
+    caplog.set_level(logging.INFO)
+    
+    fake_response = {"jobs": []}
+    monkeypatch.setattr("scripts.pipeline.fetch_jobs", lambda: fake_response)
+
+    monkeypatch.setattr(
+        "scripts.pipeline.load_api_jobs",
+        lambda jobs: len(jobs),
+    )
+
+    result = run_pipeline()
+
+    assert result == []
+    assert "Data quality rate: 0.00%" in caplog.text
