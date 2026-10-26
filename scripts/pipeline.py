@@ -86,10 +86,15 @@ def run_pipeline():
 
         # Log the number of successfully inserted jobs.
         logger.info("Inserted jobs: %s", inserted_count)
+        
+        logger.info("Pipeline status: SUCCESS")
 
         # Return all transformed jobs for further processing or testing.
         return transformed_jobs
 
+    except Exception:
+        logger.error("Pipeline status: FAILED")
+        raise
 
     finally:
         elapsed_time = time.perf_counter() - start_time

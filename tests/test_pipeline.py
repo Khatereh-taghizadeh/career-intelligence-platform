@@ -38,6 +38,7 @@ def test_run_pipeline(monkeypatch, caplog):
     assert "Invalid jobs: 0" in caplog.text
     assert "Data quality rate: 100.00%" in caplog.text
     assert "Inserted jobs: 1" in caplog.text
+    assert "Pipeline status: SUCCESS" in caplog.text
     assert "Pipeline execution time:" in caplog.text
 
 
@@ -144,6 +145,7 @@ def test_pipeline_logs_database_error(monkeypatch, caplog):
     
     assert "Pipeline failed during database loading" in caplog.text
     assert "Pipeline execution time:" in caplog.text
+    assert "Pipeline status: FAILED" in caplog.text
 
 
 def test_pipeline_empty_jobs(monkeypatch, caplog):
