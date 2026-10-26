@@ -191,4 +191,17 @@ def test_pipeline_warns_on_low_data_quality(monkeypatch, caplog):
     assert "Data quality below threshold: 50.00% < 80.00%" in caplog.text
 
 
+def test_pipeline_does_not_warn_on_high_data_quality(monkeypatch, caplog):
+    caplog.set_level(logging.WARNING)
+    job_1 = {"guid": "job-001", "title": "Data Engineer", "company": "Test Company"}
+    job_2 = {"guid": "job-002", "title": "Python Developer", "company": "Example Company"}
+    
+    api_response = {"jobs": [job_1, job_2]}
+    
+    monkeypatch.setattr("scripts.pipeline.fetch_jobs", lambda: api_response)
+    monkeypatch.setattr("scripts.pipeline.load_api_jobs", lambda jobs: len(jobs))
 
+    run_pipeline()
+
+    assert "Data quality below threshold" not in caplog.text
+    
