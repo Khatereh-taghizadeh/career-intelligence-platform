@@ -88,6 +88,16 @@ def run_pipeline():
         logger.info("Inserted jobs: %s", inserted_count)
         
         logger.info("Pipeline status: SUCCESS")
+        
+        summary = {
+            "status": "SUCCESS",
+            "fetched": fetched_count,
+            "valid": valid_count,
+            "invalid": invalid_count,
+            "inserted": inserted_count,
+            "quality_rate": quality_rate,
+        }
+        logger.info("Pipeline summary: %s", summary)
 
         # Return all transformed jobs for further processing or testing.
         return transformed_jobs

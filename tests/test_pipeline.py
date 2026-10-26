@@ -39,6 +39,8 @@ def test_run_pipeline(monkeypatch, caplog):
     assert "Data quality rate: 100.00%" in caplog.text
     assert "Inserted jobs: 1" in caplog.text
     assert "Pipeline status: SUCCESS" in caplog.text
+    assert "Pipeline summary:" in caplog.text
+    assert "'quality_rate': 100.0" in caplog.text
     assert "Pipeline execution time:" in caplog.text
 
 
