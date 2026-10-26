@@ -5,6 +5,7 @@ from scripts.load_api_jobs import load_api_jobs
 from scripts.validate_api_response import validate_api_response
 import logging
 import time
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +98,8 @@ def run_pipeline():
             "inserted": inserted_count,
             "quality_rate": quality_rate,
         }
-        logger.info("Pipeline summary: %s", summary)
+        
+        logger.info("Pipeline summary: %s", json.dumps(summary))
 
         # Return all transformed jobs for further processing or testing.
         return transformed_jobs

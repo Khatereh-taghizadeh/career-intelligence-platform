@@ -1,5 +1,6 @@
 from scripts.pipeline import run_pipeline
 import pytest
+import json
 
 
 def test_run_pipeline(monkeypatch, caplog):
@@ -40,7 +41,15 @@ def test_run_pipeline(monkeypatch, caplog):
     assert "Inserted jobs: 1" in caplog.text
     assert "Pipeline status: SUCCESS" in caplog.text
     assert "Pipeline summary:" in caplog.text
-    assert "'quality_rate': 100.0" in caplog.text
+    assert '"quality_rate": 100.0' in caplog.text
+    summary_json = next(record.message.split("Pipeline summary: ", 1)[1] for record in caplog.records if record.message.startswith("Pipeline summary: "))
+    summary_data = json.loads(summary_json)
+    assert summary_data["status"] == "SUCCESS"
+    assert summary_data["fetched"] == 1
+    assert summary_data["valid"] == 1
+    assert summary_data["invalid"] == 0
+    assert summary_data["inserted"] == 1
+    assert summary_data["quality_rate"] == 100.0
     assert "Pipeline execution time:" in caplog.text
 
 
