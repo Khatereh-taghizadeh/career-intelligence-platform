@@ -177,6 +177,8 @@ def test_pipeline_empty_jobs(monkeypatch, caplog):
 
     assert result == []
     assert "Data quality rate: 0.00%" in caplog.text
+    assert "Data quality below threshold" not in caplog.text
+
 
 def test_pipeline_warns_on_low_data_quality(monkeypatch, caplog):
     caplog.set_level(logging.WARNING)
