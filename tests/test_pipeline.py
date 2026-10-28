@@ -17,7 +17,7 @@ def test_run_pipeline(monkeypatch, caplog):
 
     fake_response = {"jobs": [fake_job]}
 
-    monkeypatch.setattr("scripts.pipeline.fetch_jobs", lambda: fake_response)
+    monkeypatch.setattr("scripts.pipeline.fetch_jobs", lambda query, country: fake_response)
 
      
     monkeypatch.setattr(
@@ -78,7 +78,7 @@ def test_pipeline_skips_invalid_jobs(monkeypatch, caplog):
 
     monkeypatch.setattr(
         "scripts.pipeline.fetch_jobs",
-        lambda: fake_response
+        lambda query, country: fake_response
     )
 
     # Step 3: Capture jobs sent to the database loader.
@@ -116,7 +116,7 @@ def test_pipeline_rejects_invalid_api_response(monkeypatch, caplog):
 
     monkeypatch.setattr(
         "scripts.pipeline.fetch_jobs",
-        lambda: {"error": "Service unavailable"}
+        lambda query, country: {"error": "Service unavailable"}
     )
 
     with pytest.raises(
@@ -145,7 +145,7 @@ def test_pipeline_logs_database_error(monkeypatch, caplog):
 
     monkeypatch.setattr(
         "scripts.pipeline.fetch_jobs",
-        lambda: {"jobs": []}
+        lambda query, country: {"jobs": []}
     )  
 
     with pytest.raises(
@@ -166,7 +166,7 @@ def test_pipeline_empty_jobs(monkeypatch, caplog):
     caplog.set_level(logging.INFO)
     
     fake_response = {"jobs": []}
-    monkeypatch.setattr("scripts.pipeline.fetch_jobs", lambda: fake_response)
+    monkeypatch.setattr("scripts.pipeline.fetch_jobs", lambda query, country: fake_response)
 
     monkeypatch.setattr(
         "scripts.pipeline.load_api_jobs",
@@ -185,7 +185,7 @@ def test_pipeline_warns_on_low_data_quality(monkeypatch, caplog):
     valid_job = {"guid": "job-001", "title": "Data Engineer", "company": "Test Company"}
     invalid_job = {"guid": "", "title": "", "company": ""}
     api_response = {"jobs": [valid_job, invalid_job]}
-    monkeypatch.setattr("scripts.pipeline.fetch_jobs", lambda: api_response)
+    monkeypatch.setattr("scripts.pipeline.fetch_jobs", lambda query, country: api_response)
     monkeypatch.setattr("scripts.pipeline.load_api_jobs", lambda jobs: len(jobs))
     
     run_pipeline()
@@ -200,7 +200,7 @@ def test_pipeline_does_not_warn_on_high_data_quality(monkeypatch, caplog):
     
     api_response = {"jobs": [job_1, job_2]}
     
-    monkeypatch.setattr("scripts.pipeline.fetch_jobs", lambda: api_response)
+    monkeypatch.setattr("scripts.pipeline.fetch_jobs", lambda query, country: api_response)
     monkeypatch.setattr("scripts.pipeline.load_api_jobs", lambda jobs: len(jobs))
 
     run_pipeline()
@@ -217,7 +217,7 @@ def test_pipeline_does_not_warn_at_quality_threshold(monkeypatch, caplog):
 
     api_response = {"jobs": valid_jobs + [invalid_job]}
 
-    monkeypatch.setattr("scripts.pipeline.fetch_jobs", lambda: api_response)
+    monkeypatch.setattr("scripts.pipeline.fetch_jobs", lambda query, country: api_response)
     monkeypatch.setattr("scripts.pipeline.load_api_jobs", lambda jobs: len(jobs))
 
     run_pipeline()
@@ -225,4 +225,31 @@ def test_pipeline_does_not_warn_at_quality_threshold(monkeypatch, caplog):
     assert "Data quality rate: 80.00%" in caplog.text
     assert "Data quality below threshold" not in caplog.text
     
+
+def test_pipeline_passes_custom_search_parameters(monkeypatch):
+    """Verify that pipeline forwards search parameters to fetch_jobs."""
+
+    captured_params = {}
+
+    def fake_fetch_jobs(query, country):
+        captured_params["query"] = query
+        captured_params["country"] = country
+        return {"jobs": []}
+
+    monkeypatch.setattr(
+        "scripts.pipeline.fetch_jobs",
+        fake_fetch_jobs
+    )
+
+    monkeypatch.setattr(
+        "scripts.pipeline.load_api_jobs",
+        lambda jobs: len(jobs)
+    )
+
+    run_pipeline(query="data analyst", country="US")
+
+    assert captured_params == {
+        "query": "data analyst",
+        "country": "US"
+    }
     

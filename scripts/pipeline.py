@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 DATA_QUALITY_THRESHOLD = 80.0
 
-def run_pipeline():
+def run_pipeline(query="junior data engineer", country="US"):
     """
     Run the job ingestion pipeline.
 
@@ -32,7 +32,7 @@ def run_pipeline():
 
         # Step 1: Fetch raw job data from the external API.
         try:
-            data = fetch_jobs()
+            data = fetch_jobs(query=query, country=country)
             validate_api_response(data)
         except Exception:
             logger.exception("Pipeline failed during API fetching or validation")
