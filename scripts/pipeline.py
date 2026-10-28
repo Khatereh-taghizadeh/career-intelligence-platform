@@ -6,6 +6,7 @@ from scripts.validate_api_response import validate_api_response
 import logging
 import time
 import json
+import argparse
 
 logger = logging.getLogger(__name__)
 
@@ -116,3 +117,31 @@ def run_pipeline(query="junior data engineer", country="US"):
     finally:
         elapsed_time = time.perf_counter() - start_time
         logger.info("Pipeline execution time: %.2f seconds", elapsed_time)
+
+
+def main():
+    """Parse CLI arguments and run the pipeline."""
+
+    parser = argparse.ArgumentParser(
+        description="Run the Career Intelligence job ingestion pipeline"
+    )
+
+    parser.add_argument(
+        "--query",
+        default="junior data engineer",
+        help="Job title to search for"
+    )
+
+    parser.add_argument(
+        "--country",
+        default="US",
+        help="Country code for job search"
+    )
+
+    args = parser.parse_args()
+
+    run_pipeline(query=args.query, country=args.country)
+
+
+if __name__ == "__main__":
+    main()

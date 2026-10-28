@@ -2,6 +2,8 @@ from scripts.pipeline import run_pipeline
 import pytest
 import json
 import logging
+import sys
+
 
 
 def test_run_pipeline(monkeypatch, caplog):
@@ -249,6 +251,36 @@ def test_pipeline_passes_custom_search_parameters(monkeypatch):
     run_pipeline(query="data analyst", country="US")
 
     assert captured_params == {
+        "query": "data analyst",
+        "country": "US"
+    }
+
+
+def test_pipeline_cli_passes_custom_arguments(monkeypatch):
+    """Verify CLI arguments are forwarded to the pipeline."""
+
+    captured_args = {}
+
+    def fake_run_pipeline(query, country):
+        captured_args["query"] = query
+        captured_args["country"] = country
+
+    monkeypatch.setattr(
+        "scripts.pipeline.run_pipeline",
+        fake_run_pipeline
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["pipeline.py", "--query", "data analyst", "--country", "US"]
+    )
+
+    from scripts.pipeline import main
+
+    main()
+
+    assert captured_args == {
         "query": "data analyst",
         "country": "US"
     }
