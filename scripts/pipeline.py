@@ -140,6 +140,11 @@ def main():
 
     args = parser.parse_args()
 
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s"
+    )
+
     if not args.query.strip():
         parser.error("--query cannot be empty")
 

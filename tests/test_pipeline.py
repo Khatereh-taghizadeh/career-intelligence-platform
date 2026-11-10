@@ -418,3 +418,40 @@ def test_pipeline_cli_normalizes_query(monkeypatch):
         "query": "data engineer",
         "country": "US"
     }
+
+
+def test_pipeline_cli_configures_logging(monkeypatch):
+    """Verify CLI configures logging at INFO level."""
+
+    import logging
+    import scripts.pipeline as pipeline
+
+    captured_config = {}
+
+    def fake_basic_config(**kwargs):
+        captured_config.update(kwargs)
+
+    monkeypatch.setattr(
+        pipeline.logging,
+        "basicConfig",
+        fake_basic_config
+    )
+
+    monkeypatch.setattr(
+        pipeline,
+        "run_pipeline",
+        lambda query, country: None
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["pipeline.py"]
+    )
+
+    pipeline.main()
+
+    assert captured_config["level"] == logging.INFO
+    assert "%(asctime)s" in captured_config["format"]
+    assert "%(levelname)s" in captured_config["format"]
+    assert "%(message)s" in captured_config["format"]
