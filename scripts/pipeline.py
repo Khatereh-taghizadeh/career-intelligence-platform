@@ -150,7 +150,7 @@ def main():
     ):
         parser.error("--country must be a two-letter country code")
 
-    run_pipeline(query=args.query, country=args.country)
+    run_pipeline(query=args.query.strip(), country=args.country.upper())
 
 
 if __name__ == "__main__":

@@ -352,3 +352,69 @@ def test_pipeline_cli_rejects_non_ascii_country(monkeypatch):
         main()
 
     assert exc_info.value.code == 2
+
+
+def test_pipeline_cli_normalizes_country(monkeypatch):
+    """Verify CLI converts country code to uppercase."""
+
+    captured_args = {}
+
+    def fake_run_pipeline(query, country):
+        captured_args["query"] = query
+        captured_args["country"] = country
+
+    monkeypatch.setattr(
+        "scripts.pipeline.run_pipeline",
+        fake_run_pipeline
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["pipeline.py", "--query", "data analyst", "--country", "us"]
+    )
+
+    from scripts.pipeline import main
+
+    main()
+
+    assert captured_args == {
+        "query": "data analyst",
+        "country": "US"
+    }
+
+
+def test_pipeline_cli_normalizes_query(monkeypatch):
+    """Verify CLI removes surrounding whitespace from query."""
+
+    captured_args = {}
+
+    def fake_run_pipeline(query, country):
+        captured_args["query"] = query
+        captured_args["country"] = country
+
+    monkeypatch.setattr(
+        "scripts.pipeline.run_pipeline",
+        fake_run_pipeline
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "pipeline.py",
+            "--query",
+            "  data engineer  ",
+            "--country",
+            "US"
+        ]
+    )
+
+    from scripts.pipeline import main
+
+    main()
+
+    assert captured_args == {
+        "query": "data engineer",
+        "country": "US"
+    }
