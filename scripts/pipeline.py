@@ -140,6 +140,16 @@ def main():
 
     args = parser.parse_args()
 
+    if not args.query.strip():
+        parser.error("--query cannot be empty")
+
+    if (
+        len(args.country) != 2
+        or not args.country.isascii()
+        or not args.country.isalpha()
+    ):
+        parser.error("--country must be a two-letter country code")
+
     run_pipeline(query=args.query, country=args.country)
 
 

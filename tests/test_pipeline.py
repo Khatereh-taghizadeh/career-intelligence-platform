@@ -284,4 +284,71 @@ def test_pipeline_cli_passes_custom_arguments(monkeypatch):
         "query": "data analyst",
         "country": "US"
     }
-    
+
+
+def test_pipeline_cli_rejects_empty_query(monkeypatch):
+    """Verify CLI rejects an empty job search query."""
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["pipeline.py", "--query", "", "--country", "US"]
+    )
+
+    from scripts.pipeline import main
+
+    with pytest.raises(SystemExit) as exc_info:
+        main()
+
+    assert exc_info.value.code == 2
+
+
+def test_pipeline_cli_rejects_whitespace_query(monkeypatch):
+    """Verify CLI rejects a query containing only spaces."""
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["pipeline.py", "--query", "   ", "--country", "US"]
+    )
+
+    from scripts.pipeline import main
+
+    with pytest.raises(SystemExit) as exc_info:
+        main()
+
+    assert exc_info.value.code == 2
+
+
+def test_pipeline_cli_rejects_invalid_country(monkeypatch):
+    """Verify CLI rejects a country code with three letters."""
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["pipeline.py", "--query", "data analyst", "--country", "USA"]
+    )
+
+    from scripts.pipeline import main
+
+    with pytest.raises(SystemExit) as exc_info:
+        main()
+
+    assert exc_info.value.code == 2
+
+
+def test_pipeline_cli_rejects_non_ascii_country(monkeypatch):
+    """Verify CLI rejects non-ASCII country codes."""
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["pipeline.py", "--query", "data analyst", "--country", "ای"]
+    )
+
+    from scripts.pipeline import main
+
+    with pytest.raises(SystemExit) as exc_info:
+        main()
+
+    assert exc_info.value.code == 2
