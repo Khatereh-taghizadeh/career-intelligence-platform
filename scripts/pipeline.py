@@ -73,7 +73,14 @@ def run_pipeline(query="junior data engineer", country="US"):
 
 
         # Log pipeline metrics.
-        logger.info("Fetched jobs: %s", fetched_count)
+        logger.info(
+            "Pipeline event: %s",
+            json.dumps({
+                "event": "jobs_fetched",
+                "count": fetched_count
+            })
+        )
+
         logger.info("Valid jobs: %s", valid_count)
         logger.info("Invalid jobs: %s", invalid_count)
         logger.info("Data quality rate: %.2f%%", quality_rate)
