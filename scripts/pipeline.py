@@ -12,6 +12,16 @@ logger = logging.getLogger(__name__)
 
 DATA_QUALITY_THRESHOLD = 80.0
 
+class JsonFormatter(logging.Formatter):
+    def format(self, record):
+        log_data = {
+            "timestamp": self.formatTime(record),
+            "level": record.levelname,
+            "message": record.getMessage()
+        }
+        return json.dumps(log_data)
+
+
 def run_pipeline(query="junior data engineer", country="US"):
     """
     Run the job ingestion pipeline.
@@ -147,9 +157,13 @@ def main():
 
     args = parser.parse_args()
 
+    handler = logging.StreamHandler()
+    handler.setFormatter(JsonFormatter())
+
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(message)s"
+        handlers=[handler],
+        force=True
     )
 
     if not args.query.strip():
@@ -162,7 +176,10 @@ def main():
     ):
         parser.error("--country must be a two-letter country code")
 
-    run_pipeline(query=args.query.strip(), country=args.country.upper())
+    run_pipeline(
+        query=args.query.strip(),
+        country=args.country.upper()
+    )
 
 
 if __name__ == "__main__":

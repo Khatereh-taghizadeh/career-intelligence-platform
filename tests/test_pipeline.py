@@ -452,9 +452,7 @@ def test_pipeline_cli_configures_logging(monkeypatch):
     pipeline.main()
 
     assert captured_config["level"] == logging.INFO
-    assert "%(asctime)s" in captured_config["format"]
-    assert "%(levelname)s" in captured_config["format"]
-    assert "%(message)s" in captured_config["format"]
+    assert isinstance(captured_config["handlers"][0], logging.StreamHandler)
 
 
 def test_pipeline_logs_jobs_fetched_event(monkeypatch, caplog):
@@ -496,3 +494,67 @@ def test_pipeline_logs_jobs_fetched_event(monkeypatch, caplog):
         "event": "jobs_fetched",
         "count": 0
     }
+
+
+def test_json_formatter():
+    """Verify that JsonFormatter produces valid JSON logs."""
+    import json
+    import logging
+    from scripts.pipeline import JsonFormatter
+
+    formatter = JsonFormatter()
+
+    record = logging.LogRecord(
+        name="test",
+        level=logging.INFO,
+        pathname=__file__,
+        lineno=1,
+        msg="Pipeline started",
+        args=(),
+        exc_info=None
+    )
+
+    result = formatter.format(record)
+    log_data = json.loads(result)
+
+    assert log_data["level"] == "INFO"
+    assert log_data["message"] == "Pipeline started"
+    assert "timestamp" in log_data
+
+
+def test_pipeline_cli_uses_json_formatter(monkeypatch):
+    """Verify CLI configures a handler with JsonFormatter."""
+    import logging
+    import sys
+    import scripts.pipeline as pipeline
+
+    captured_config = {}
+
+    def fake_basic_config(**kwargs):
+        captured_config.update(kwargs)
+
+    monkeypatch.setattr(
+        pipeline.logging,
+        "basicConfig",
+        fake_basic_config
+    )
+
+    monkeypatch.setattr(
+        pipeline,
+        "run_pipeline",
+        lambda query, country: None
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["pipeline.py"]
+    )
+
+    pipeline.main()
+
+    handler = captured_config["handlers"][0]
+
+    assert isinstance(handler, logging.StreamHandler)
+    assert isinstance(handler.formatter, pipeline.JsonFormatter)
+    assert captured_config["force"] is True
