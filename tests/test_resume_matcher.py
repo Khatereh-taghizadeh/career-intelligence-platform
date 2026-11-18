@@ -166,4 +166,31 @@ def test_rank_jobs_custom_weights():
     assert result.iloc[0]["match_score"] == 71.43
     assert result.iloc[0]["final_score"] == 80.0
 
+def test_rank_jobs_score_explainability():
+    import pandas as pd
+
+    jobs = pd.DataFrame([
+        {
+            "title": "Junior Data Engineer",
+            "seniority": "junior",
+            "country": "US",
+            "remote": "remote",
+            "skills": "python|sql|aws",
+        }
+    ])
+
+    result = rank_jobs(
+        resume_skills=["python", "sql"],
+        jobs=jobs,
+        target_role="data engineer",
+        skill_weight=0.7,
+        title_weight=0.3,
+    )
+
+    job = result.iloc[0]
+
+    assert job["skill_contribution"] == 50.0
+    assert job["title_contribution"] == 30.0
+    assert job["final_score"] == 80.0
+
 

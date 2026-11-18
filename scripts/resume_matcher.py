@@ -144,6 +144,14 @@ def rank_jobs(
             )
         )
 
+        filtered_jobs["skill_contribution"] = (
+            filtered_jobs["match_score"] * skill_weight
+        ).round(2)
+
+        filtered_jobs["title_contribution"] = (
+            filtered_jobs["title_score"] * title_weight
+        ).round(2)
+
         filtered_jobs["final_score"] = (
             filtered_jobs["match_score"] * skill_weight
             + filtered_jobs["title_score"] * title_weight

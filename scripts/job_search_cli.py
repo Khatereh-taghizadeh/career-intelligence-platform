@@ -124,15 +124,18 @@ def main():
     )
 
     display_columns = [
-        "title",
-        "seniority",
-        "city",
-        "country",
-        "remote",
-        "salary_range",
-        "match_score",
-        "final_score",
-    ]
+    "title",
+    "seniority",
+    "city",
+    "country",
+    "remote",
+    "salary_range",
+    "match_score",
+    "title_score",
+    "skill_contribution",
+    "title_contribution",
+    "final_score",
+]
 
     print(
         ranked_jobs[display_columns]
