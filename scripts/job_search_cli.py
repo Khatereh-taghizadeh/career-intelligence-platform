@@ -39,7 +39,16 @@ def main():
         help="Work arrangement (remote, hybrid, onsite)"
     )
 
+    parser.add_argument(
+        "--top",
+        type=int,
+        default=5,
+        help="Number of top matching jobs to display"
+    )
+
     args = parser.parse_args()
+    if args.top < 1:
+        parser.error("--top must be at least 1")
 
     resume_text = read_resume_pdf(args.resume)
     resume_skills = extract_skills(resume_text)
@@ -63,7 +72,7 @@ def main():
         print("Try changing seniority, country, or work mode.")
         return
 
-    print("\nTop 5 Job Matches:")
+    print(f"\nTop {args.top} Job Matches:")
 
     def format_salary(row):
         minimum = row["salary_min_usd"]
@@ -91,7 +100,7 @@ def main():
 
     print(
         ranked_jobs[display_columns]
-        .head(5)
+        .head(args.top)
         .to_string(index=False, col_space=14)
     )
 

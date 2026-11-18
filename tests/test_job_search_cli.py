@@ -90,6 +90,7 @@ def test_job_search_cli_no_matches(tmp_path):
     assert "Matching jobs: 0" in result.stdout
     assert "No jobs found for the selected filters." in result.stdout
 
+
 def test_job_search_cli_salary_display(tmp_path):
     resume_path = tmp_path / "test_resume.pdf"
 
@@ -116,3 +117,29 @@ def test_job_search_cli_salary_display(tmp_path):
     assert "seniority" in output
     assert "match_score" in output
     assert "$" in output
+
+
+def test_job_search_cli_custom_top(tmp_path):
+    resume_path = tmp_path / "test_resume.pdf"
+
+    pdf = canvas.Canvas(str(resume_path))
+    pdf.drawString(100, 750, "Skills: Python, SQL, Docker")
+    pdf.save()
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "scripts.job_search_cli",
+            "--resume",
+            str(resume_path),
+            "--top",
+            "10",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    assert "Top 10 Job Matches:" in result.stdout
+    assert "Matching jobs:" in result.stdout
