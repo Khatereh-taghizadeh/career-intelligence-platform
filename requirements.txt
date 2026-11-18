@@ -4,6 +4,5 @@ python-dateutil==2.9.0.post0
 six==1.17.0
 psycopg[binary]==3.3.6
 pytest==9.1.1
-
-
 pypdf==7.1.1
+reportlab==5.1.0
