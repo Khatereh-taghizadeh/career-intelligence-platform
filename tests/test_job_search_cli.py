@@ -197,3 +197,38 @@ def test_job_search_cli_invalid_weights(tmp_path):
 
     assert result.returncode != 0
     assert "Ranking weights must sum to 1.0" in result.stderr
+
+def test_job_search_cli_csv_export(tmp_path):
+    import pandas as pd
+
+    resume_path = tmp_path / "test_resume.pdf"
+    export_path = tmp_path / "reports" / "job_matches.csv"
+
+    pdf = canvas.Canvas(str(resume_path))
+    pdf.drawString(100, 750, "Skills: Python, SQL, Docker, AWS")
+    pdf.save()
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "scripts.job_search_cli",
+            "--resume",
+            str(resume_path),
+            "--export",
+            str(export_path),
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert export_path.exists()
+
+    exported_jobs = pd.read_csv(export_path)
+
+    assert not exported_jobs.empty
+    assert "final_score" in exported_jobs.columns
+    assert "skill_contribution" in exported_jobs.columns
+    assert "title_contribution" in exported_jobs.columns
+

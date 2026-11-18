@@ -66,6 +66,12 @@ def main():
         help="Weight assigned to job title relevance (0 to 1)"
     )
 
+    parser.add_argument(
+        "--export",
+        type=str,
+        default=None,
+        help="Optional CSV file path to export ranked jobs"
+    )
 
     args = parser.parse_args()
 
@@ -142,6 +148,20 @@ def main():
         .head(args.top)
         .to_string(index=False, col_space=14)
     )
+
+    if args.export:
+        from pathlib import Path
+
+        export_path = Path(args.export)
+        export_path.parent.mkdir(parents=True, exist_ok=True)
+
+        ranked_jobs[display_columns].to_csv(
+            export_path,
+            index=False
+        )
+
+        print(f"\nJob ranking report exported to: {export_path}")
+
 
     skill_gaps = analyze_skill_gaps(
         resume_skills,
