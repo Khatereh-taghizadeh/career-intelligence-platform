@@ -1,3 +1,4 @@
+import pytest
 import pandas as pd
 from scripts.resume_matcher import match_skills, rank_jobs, analyze_skill_gaps, calculate_title_relevance
 
@@ -120,4 +121,49 @@ def test_rank_jobs_with_target_role():
     assert ranked.iloc[0]["title"] == "Data Engineer"
     assert ranked.iloc[0]["title_score"] == 100.0
     assert ranked.iloc[0]["final_score"] == 88.57
+
+
+def test_rank_jobs_invalid_weights():
+    jobs = pd.DataFrame()
+
+    with pytest.raises(ValueError):
+        rank_jobs(
+            ["python", "sql"],
+            jobs,
+            skill_weight=0.8,
+            title_weight=0.5,
+        )
+
+    with pytest.raises(ValueError):
+        rank_jobs(
+            ["python", "sql"],
+            jobs,
+            skill_weight=-0.2,
+            title_weight=1.2,
+        )
+
+def test_rank_jobs_custom_weights():
+    import pandas as pd
+
+    jobs = pd.DataFrame([
+        {
+            "title": "Junior Data Engineer",
+            "seniority": "junior",
+            "country": "US",
+            "remote": "remote",
+            "skills": "python|sql|aws",
+        }
+    ])
+
+    result = rank_jobs(
+        resume_skills=["python", "sql"],
+        jobs=jobs,
+        target_role="data engineer",
+        skill_weight=0.7,
+        title_weight=0.3,
+    )
+
+    assert result.iloc[0]["match_score"] == 71.43
+    assert result.iloc[0]["final_score"] == 80.0
+
 

@@ -171,3 +171,29 @@ def test_job_search_cli_target_role(tmp_path):
     assert "Top 5 Job Matches:" in result.stdout
     assert "final_score" in result.stdout
     assert "Junior Data Engineer" in result.stdout
+
+def test_job_search_cli_invalid_weights(tmp_path):
+    resume_path = tmp_path / "test_resume.pdf"
+
+    pdf = canvas.Canvas(str(resume_path))
+    pdf.drawString(100, 750, "Skills: Python, SQL")
+    pdf.save()
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "scripts.job_search_cli",
+            "--resume",
+            str(resume_path),
+            "--skill-weight",
+            "0.8",
+            "--title-weight",
+            "0.5",
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode != 0
+    assert "Ranking weights must sum to 1.0" in result.stderr

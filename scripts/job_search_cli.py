@@ -52,7 +52,33 @@ def main():
         help="Target job role for ranking relevance"
     )
 
+    parser.add_argument(
+        "--skill-weight",
+        type=float,
+        default=0.4,
+        help="Weight assigned to resume skill matching (0 to 1)"
+    )
+
+    parser.add_argument(
+        "--title-weight",
+        type=float,
+        default=0.6,
+        help="Weight assigned to job title relevance (0 to 1)"
+    )
+
+
     args = parser.parse_args()
+
+    if not (
+        0 <= args.skill_weight <= 1
+        and 0 <= args.title_weight <= 1
+    ):
+        parser.error("Ranking weights must be between 0 and 1")
+
+    if abs(args.skill_weight + args.title_weight - 1.0) >= 1e-9:
+        parser.error("Ranking weights must sum to 1.0")
+
+
     if args.top < 1:
         parser.error("--top must be at least 1")
 
@@ -71,6 +97,8 @@ def main():
         country=args.country,
         work_mode=args.work_mode,
         target_role=args.target_role,
+        skill_weight=args.skill_weight,
+        title_weight=args.title_weight,
     )
 
     print("\nMatching jobs:", len(ranked_jobs))

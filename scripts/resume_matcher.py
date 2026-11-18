@@ -101,7 +101,17 @@ def rank_jobs(
     country="US",
     work_mode=None,
     target_role=None,
+    skill_weight=0.4,
+    title_weight=0.6,
 ):
+
+    if not (0 <= skill_weight <= 1 and 0 <= title_weight <= 1):
+        raise ValueError("Ranking weights must be between 0 and 1")
+
+    if not abs(skill_weight + title_weight - 1.0) < 1e-9:
+        raise ValueError("Ranking weights must sum to 1.0")
+
+
     filtered_jobs = jobs.copy()
 
     if seniority:
@@ -135,8 +145,8 @@ def rank_jobs(
         )
 
         filtered_jobs["final_score"] = (
-            filtered_jobs["match_score"] * 0.4
-            + filtered_jobs["title_score"] * 0.6
+            filtered_jobs["match_score"] * skill_weight
+            + filtered_jobs["title_score"] * title_weight
         ).round(2)
 
     sort_column = "final_score" if target_role else "match_score"
@@ -170,3 +180,5 @@ def analyze_skill_gaps(resume_skills, ranked_jobs):
         }
         for skill, count in counter.most_common()
     ]
+
+ 
