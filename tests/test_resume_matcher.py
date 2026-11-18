@@ -8,7 +8,7 @@ def test_match_skills():
         ["Python", "SQL", "AWS", "Airflow"]
     )
 
-    assert result["match_score"] == 50.0
+    assert result["match_score"] == 58.82
     assert result["matched_skills"] == ["python", "sql"]
     assert result["missing_skills"] == ["airflow", "aws"]
 
@@ -66,3 +66,12 @@ def test_analyze_skill_gaps():
     assert result[1]["skill"] == "airflow"
     assert result[1]["job_count"] == 2
 
+def test_weighted_skill_scoring():
+    result = match_skills(
+        ["sql", "python"],
+        ["sql", "python", "excel"]
+    )
+
+    assert result["match_score"] == 83.33
+    assert result["matched_skills"] == ["python", "sql"]
+    assert result["missing_skills"] == ["excel"]

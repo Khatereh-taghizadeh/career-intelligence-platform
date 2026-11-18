@@ -2,6 +2,17 @@ import re
 from pypdf import PdfReader
 from collections import Counter
 
+SKILL_WEIGHTS = {
+    "sql": 5,
+    "python": 5,
+    "statistics": 4,
+    "postgresql": 4,
+    "aws": 4,
+    "docker": 3,
+    "airflow": 3,
+    "excel": 2,
+}
+
 
 def match_skills(resume_skills, job_skills):
     resume_set = {skill.lower().strip() for skill in resume_skills}
@@ -10,9 +21,19 @@ def match_skills(resume_skills, job_skills):
     matched = sorted(resume_set & job_set)
     missing = sorted(job_set - resume_set)
 
+    total_weight = sum(
+        SKILL_WEIGHTS.get(skill, 1)
+        for skill in job_set
+    )
+
+    matched_weight = sum(
+        SKILL_WEIGHTS.get(skill, 1)
+        for skill in matched
+    )
+
     score = (
-        round(len(matched) / len(job_set) * 100, 2)
-        if job_set else 0.0
+        round(matched_weight / total_weight * 100, 2)
+        if total_weight else 0.0
     )
 
     return {
