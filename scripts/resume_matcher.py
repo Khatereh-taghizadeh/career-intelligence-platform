@@ -1,5 +1,6 @@
 import re
 from pypdf import PdfReader
+from collections import Counter
 
 
 def match_skills(resume_skills, job_skills):
@@ -93,3 +94,28 @@ def rank_jobs(
         "match_score",
         ascending=False
     )
+
+
+def analyze_skill_gaps(resume_skills, ranked_jobs):
+    counter = Counter()
+
+    for skills in ranked_jobs["skills"].dropna():
+        job_skills = skills.split("|")
+
+        result = match_skills(
+            resume_skills,
+            job_skills
+        )
+
+        counter.update(result["missing_skills"])
+
+    return [
+        {
+            "skill": skill,
+            "job_count": count,
+            "demand_percent": round(
+                count / len(ranked_jobs) * 100, 2
+            )
+        }
+        for skill, count in counter.most_common()
+    ]

@@ -1,5 +1,5 @@
 import pandas as pd
-from scripts.resume_matcher import match_skills, rank_jobs
+from scripts.resume_matcher import match_skills, rank_jobs, analyze_skill_gaps
 
 
 def test_match_skills():
@@ -49,4 +49,20 @@ def test_rank_jobs_filters():
     assert len(result) == 1
     assert result.iloc[0]["title"] == "Junior Data Analyst"
     assert result.iloc[0]["match_score"] == 100.0
+
+def test_analyze_skill_gaps():
+    jobs = pd.DataFrame([
+        {"skills": "python|sql|aws"},
+        {"skills": "python|aws|airflow"},
+        {"skills": "python|sql|airflow"},
+    ])
+
+    result = analyze_skill_gaps(["python", "sql"], jobs)
+
+    assert result[0]["skill"] == "aws"
+    assert result[0]["job_count"] == 2
+    assert result[0]["demand_percent"] == 66.67
+
+    assert result[1]["skill"] == "airflow"
+    assert result[1]["job_count"] == 2
 
