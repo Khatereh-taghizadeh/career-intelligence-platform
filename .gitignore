@@ -5,3 +5,6 @@ __pycache__/
 scripts/load_data_practice.py
 
 /private/
+
+# Generated job ranking reports
+/reports/*.csv
