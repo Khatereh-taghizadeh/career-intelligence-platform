@@ -65,10 +65,34 @@ def main():
 
     print("\nTop 5 Job Matches:")
 
+    def format_salary(row):
+        minimum = row["salary_min_usd"]
+        maximum = row["salary_max_usd"]
+
+        if pd.isna(minimum) or pd.isna(maximum):
+            return "Not listed"
+
+        return f"${minimum:,.0f} - ${maximum:,.0f}"
+
+    ranked_jobs["salary_range"] = ranked_jobs.apply(
+        format_salary,
+        axis=1
+    )
+
+    display_columns = [
+        "title",
+        "seniority",
+        "city",
+        "country",
+        "remote",
+        "salary_range",
+        "match_score",
+    ]
+
     print(
-        ranked_jobs[
-            ["title", "match_score"]
-        ].head(5).to_string(index=False)
+        ranked_jobs[display_columns]
+        .head(5)
+        .to_string(index=False, col_space=14)
     )
 
     skill_gaps = analyze_skill_gaps(
