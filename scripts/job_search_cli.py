@@ -20,6 +20,25 @@ def main():
         help="Path to your resume PDF"
     )
 
+    parser.add_argument(
+        "--seniority",
+        default="junior",
+        help="Job seniority level (junior, mid, senior)"
+    )
+
+    parser.add_argument(
+        "--country",
+        default="US",
+        help="Country code (US, CA, GB, DE)"
+    )
+
+    parser.add_argument(
+        "--work-mode",
+        default="remote",
+        choices=["remote", "hybrid", "onsite"],
+        help="Work arrangement (remote, hybrid, onsite)"
+    )
+
     args = parser.parse_args()
 
     resume_text = read_resume_pdf(args.resume)
@@ -33,12 +52,17 @@ def main():
     ranked_jobs = rank_jobs(
         resume_skills,
         jobs,
-        seniority="junior",
-        country="US",
-        work_mode="remote",
+        seniority=args.seniority,
+        country=args.country,
+        work_mode=args.work_mode,
     )
 
     print("\nMatching jobs:", len(ranked_jobs))
+    if ranked_jobs.empty:
+        print("\nNo jobs found for the selected filters.")
+        print("Try changing seniority, country, or work mode.")
+        return
+
     print("\nTop 5 Job Matches:")
 
     print(
