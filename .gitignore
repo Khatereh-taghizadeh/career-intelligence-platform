@@ -8,3 +8,4 @@ scripts/load_data_practice.py
 
 # Generated job ranking reports
 /reports/*.csv
+/reports/*.metadata.json

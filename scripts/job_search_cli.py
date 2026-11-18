@@ -1,5 +1,9 @@
 import argparse
+import json
+from datetime import datetime, timezone
+
 import pandas as pd
+
 from scripts.resume_matcher import (
     read_resume_pdf,
     extract_skills,
@@ -161,6 +165,30 @@ def main():
         )
 
         print(f"\nJob ranking report exported to: {export_path}")
+
+        metadata = {
+            "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+            "csv_file": export_path.name,
+            "total_matches": len(ranked_jobs),
+            "search_parameters": {
+                "target_role": args.target_role,
+                "seniority": args.seniority,
+                "country": args.country,
+                "work_mode": args.work_mode,
+                "top": args.top,
+            },
+            "ranking_weights": {
+                "skill_weight": args.skill_weight,
+                "title_weight": args.title_weight,
+            },
+        }
+
+        metadata_path = export_path.with_suffix(".metadata.json")
+
+        with metadata_path.open("w", encoding="utf-8") as file:
+            json.dump(metadata, file, indent=4)
+
+        print(f"Job ranking metadata exported to: {metadata_path}")
 
 
     skill_gaps = analyze_skill_gaps(
