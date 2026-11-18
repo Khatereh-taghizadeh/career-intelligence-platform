@@ -19,6 +19,13 @@ class JsonFormatter(logging.Formatter):
             "level": record.levelname,
             "message": record.getMessage()
         }
+
+        if hasattr(record, "event"):
+            log_data["event"] = record.event
+
+        if hasattr(record, "count"):
+            log_data["count"] = record.count
+
         return json.dumps(log_data)
 
 
@@ -84,11 +91,11 @@ def run_pipeline(query="junior data engineer", country="US"):
 
         # Log pipeline metrics.
         logger.info(
-            "Pipeline event: %s",
-            json.dumps({
+            "Jobs fetched",
+            extra={
                 "event": "jobs_fetched",
                 "count": fetched_count
-            })
+            }
         )
 
         logger.info("Valid jobs: %s", valid_count)

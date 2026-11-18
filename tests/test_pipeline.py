@@ -37,7 +37,11 @@ def test_run_pipeline(monkeypatch, caplog):
 
 
     # Verify pipeline metrics in the logs.
-    assert '"event": "jobs_fetched", "count": 1' in caplog.text
+    assert any(
+    getattr(record, "event", None) == "jobs_fetched"
+    and getattr(record, "count", None) == 1
+    for record in caplog.records
+)
     assert "Valid jobs: 1" in caplog.text
     assert "Invalid jobs: 0" in caplog.text
     assert "Data quality rate: 100.00%" in caplog.text
@@ -107,7 +111,11 @@ def test_pipeline_skips_invalid_jobs(monkeypatch, caplog):
     assert "Missing posting_id" in caplog.text
 
      
-    assert '"event": "jobs_fetched", "count": 2' in caplog.text
+    assert any(
+    getattr(record, "event", None) == "jobs_fetched"
+    and getattr(record, "count", None) == 2
+    for record in caplog.records
+)
     assert "Valid jobs: 1" in caplog.text
     assert "Invalid jobs: 1" in caplog.text
     assert "Inserted jobs: 1" in caplog.text
@@ -456,8 +464,7 @@ def test_pipeline_cli_configures_logging(monkeypatch):
 
 
 def test_pipeline_logs_jobs_fetched_event(monkeypatch, caplog):
-    """Verify pipeline logs the fetched jobs event as JSON."""
-    import json
+    """Verify pipeline logs structured jobs_fetched event."""
     import logging
     import scripts.pipeline as pipeline
 
@@ -480,20 +487,15 @@ def test_pipeline_logs_jobs_fetched_event(monkeypatch, caplog):
     with caplog.at_level(logging.INFO):
         pipeline.run_pipeline()
 
-    messages = [
-        record.getMessage()
+    events = [
+        record
         for record in caplog.records
-        if record.message.startswith("Pipeline event:")
+        if getattr(record, "event", None) == "jobs_fetched"
     ]
 
-    assert messages
-
-    event = json.loads(messages[0].split("Pipeline event: ", 1)[1])
-
-    assert event == {
-        "event": "jobs_fetched",
-        "count": 0
-    }
+    assert len(events) == 1
+    assert events[0].getMessage() == "Jobs fetched"
+    assert events[0].count == 0
 
 
 def test_json_formatter():
