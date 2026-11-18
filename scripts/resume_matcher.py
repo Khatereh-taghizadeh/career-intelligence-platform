@@ -79,6 +79,20 @@ def read_resume_pdf(file_path):
 
     return "\n".join(pages)
 
+def calculate_title_relevance(job_title, target_role):
+    job_words = set(job_title.lower().split())
+    target_words = set(target_role.lower().split())
+
+    if not target_words:
+        return 0.0
+
+    matched_words = job_words & target_words
+
+    return round(
+        len(matched_words) / len(target_words) * 100,
+        2
+    )
+
 
 def rank_jobs(
     resume_skills,
@@ -86,6 +100,7 @@ def rank_jobs(
     seniority="junior",
     country="US",
     work_mode=None,
+    target_role=None,
 ):
     filtered_jobs = jobs.copy()
 
@@ -111,8 +126,23 @@ def rank_jobs(
         )["match_score"]
     )
 
+    if target_role:
+        filtered_jobs["title_score"] = filtered_jobs["title"].apply(
+            lambda title: calculate_title_relevance(
+                str(title),
+                target_role
+            )
+        )
+
+        filtered_jobs["final_score"] = (
+            filtered_jobs["match_score"] * 0.4
+            + filtered_jobs["title_score"] * 0.6
+        ).round(2)
+
+    sort_column = "final_score" if target_role else "match_score"
+
     return filtered_jobs.sort_values(
-        "match_score",
+        sort_column,
         ascending=False
     )
 

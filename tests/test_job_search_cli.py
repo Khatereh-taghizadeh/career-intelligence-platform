@@ -143,3 +143,31 @@ def test_job_search_cli_custom_top(tmp_path):
 
     assert "Top 10 Job Matches:" in result.stdout
     assert "Matching jobs:" in result.stdout
+
+def test_job_search_cli_target_role(tmp_path):
+    resume_path = tmp_path / "test_resume.pdf"
+
+    pdf = canvas.Canvas(str(resume_path))
+    pdf.drawString(100, 750, "Skills: Python, SQL, Docker")
+    pdf.save()
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "scripts.job_search_cli",
+            "--resume",
+            str(resume_path),
+            "--target-role",
+            "data engineer",
+            "--top",
+            "5",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    assert "Top 5 Job Matches:" in result.stdout
+    assert "final_score" in result.stdout
+    assert "Junior Data Engineer" in result.stdout

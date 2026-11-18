@@ -1,5 +1,5 @@
 import pandas as pd
-from scripts.resume_matcher import match_skills, rank_jobs, analyze_skill_gaps
+from scripts.resume_matcher import match_skills, rank_jobs, analyze_skill_gaps, calculate_title_relevance
 
 
 def test_match_skills():
@@ -75,3 +75,49 @@ def test_weighted_skill_scoring():
     assert result["match_score"] == 83.33
     assert result["matched_skills"] == ["python", "sql"]
     assert result["missing_skills"] == ["excel"]
+
+def test_calculate_title_relevance():
+    assert calculate_title_relevance(
+        "Junior Data Engineer", "Data Engineer"
+    ) == 100.0
+
+    assert calculate_title_relevance(
+        "Data Analyst", "Data Engineer"
+    ) == 50.0
+
+    assert calculate_title_relevance(
+        "Software Developer", "Data Engineer"
+    ) == 0.0
+
+    assert calculate_title_relevance(
+        "Data Engineer", ""
+    ) == 0.0
+
+def test_rank_jobs_with_target_role():
+    jobs = pd.DataFrame([
+        {
+            "title": "Data Analyst",
+            "seniority": "junior",
+            "country": "US",
+            "remote": "remote",
+            "skills": "python|sql",
+        },
+        {
+            "title": "Data Engineer",
+            "seniority": "junior",
+            "country": "US",
+            "remote": "remote",
+            "skills": "python|sql|aws",
+        },
+    ])
+
+    ranked = rank_jobs(
+        ["python", "sql"],
+        jobs,
+        target_role="Data Engineer",
+    )
+
+    assert ranked.iloc[0]["title"] == "Data Engineer"
+    assert ranked.iloc[0]["title_score"] == 100.0
+    assert ranked.iloc[0]["final_score"] == 88.57
+

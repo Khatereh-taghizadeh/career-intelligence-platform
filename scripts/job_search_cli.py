@@ -46,6 +46,12 @@ def main():
         help="Number of top matching jobs to display"
     )
 
+    parser.add_argument(
+        "--target-role",
+        default="data engineer",
+        help="Target job role for ranking relevance"
+    )
+
     args = parser.parse_args()
     if args.top < 1:
         parser.error("--top must be at least 1")
@@ -64,6 +70,7 @@ def main():
         seniority=args.seniority,
         country=args.country,
         work_mode=args.work_mode,
+        target_role=args.target_role,
     )
 
     print("\nMatching jobs:", len(ranked_jobs))
@@ -96,6 +103,7 @@ def main():
         "remote",
         "salary_range",
         "match_score",
+        "final_score",
     ]
 
     print(
